@@ -1,0 +1,148 @@
+.map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.map-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* Markers */
+.map-marker {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.map-marker:hover {
+  transform: scale(1.4);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+}
+
+.map-marker.selected {
+  transform: scale(1.6);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  z-index: 10;
+}
+
+.map-marker.destination {
+  border-radius: 4px;
+  transform: rotate(45deg);
+}
+
+.map-marker.destination:hover {
+  transform: rotate(45deg) scale(1.4);
+}
+
+.map-marker.destination.selected {
+  transform: rotate(45deg) scale(1.6);
+}
+
+/* Pulse animation for origin */
+.marker-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  margin-top: -12px;
+  margin-left: -12px;
+  border: 2px solid;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Popups */
+.mapboxgl-popup-content {
+  background: rgba(15, 20, 35, 0.95) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+}
+
+.mapboxgl-popup-tip {
+  border-top-color: rgba(15, 20, 35, 0.95) !important;
+}
+
+.popup-content {
+  color: #e2e8f0;
+}
+
+.popup-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.popup-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.popup-tracking {
+  font-size: 11px;
+  color: #64748b;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Token warning overlay */
+.map-token-warning {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 20, 35, 0.9);
+  backdrop-filter: blur(8px);
+  color: #e2e8f0;
+  text-align: center;
+  padding: 32px;
+  z-index: 20;
+}
+
+.map-token-warning .warning-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.map-token-warning p {
+  font-size: 16px;
+  max-width: 400px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.map-token-warning code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #a78bfa;
+}
