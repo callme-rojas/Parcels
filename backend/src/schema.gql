@@ -1,0 +1,162 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AuthPayload {
+  accessToken: String!
+  user: User!
+}
+
+input CrearUsuarioInput {
+  email: String!
+  nombre: String!
+  password: String!
+  rol: Rol!
+}
+
+input CreateParcelInput {
+  """Destination address"""
+  destinationAddress: String!
+
+  """Destination latitude"""
+  destinationLat: Float!
+
+  """Destination longitude"""
+  destinationLng: Float!
+
+  """Origin address"""
+  originAddress: String!
+
+  """Origin latitude"""
+  originLat: Float!
+
+  """Origin longitude"""
+  originLng: Float!
+
+  """Recipient name"""
+  recipientName: String!
+
+  """Sender name"""
+  senderName: String!
+
+  """Weight in kg"""
+  weight: Float!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type Mutation {
+  crearUsuario(input: CrearUsuarioInput!): User!
+
+  """Create a new parcel"""
+  createParcel(input: CreateParcelInput!): Parcel!
+  login(input: LoginInput!): AuthPayload!
+  registerCliente(input: RegisterClienteInput!): AuthPayload!
+
+  """Delete a parcel"""
+  removeParcel(id: ID!): Boolean!
+
+  """Update parcel status"""
+  updateParcelStatus(input: UpdateParcelStatusInput!): Parcel!
+}
+
+"""A parcel/encomienda being shipped"""
+type Parcel {
+  """Date the parcel was created"""
+  createdAt: DateTime!
+
+  """Date the parcel was delivered"""
+  deliveredAt: DateTime
+
+  """Destination address"""
+  destinationAddress: String!
+
+  """Destination latitude"""
+  destinationLat: Float!
+
+  """Destination longitude"""
+  destinationLng: Float!
+  id: ID!
+
+  """Origin address"""
+  originAddress: String!
+
+  """Origin latitude"""
+  originLat: Float!
+
+  """Origin longitude"""
+  originLng: Float!
+
+  """Recipient name"""
+  recipientName: String!
+
+  """Sender name"""
+  senderName: String!
+
+  """Current parcel status"""
+  status: ParcelStatus!
+
+  """Tracking number"""
+  trackingNumber: String!
+
+  """Weight in kg"""
+  weight: Float!
+}
+
+"""The current status of a parcel"""
+enum ParcelStatus {
+  CANCELLED
+  DELIVERED
+  IN_TRANSIT
+  PENDING
+}
+
+type Query {
+  me: User!
+
+  """Get a parcel by ID"""
+  parcel(id: ID!): Parcel!
+
+  """Get a parcel by tracking number"""
+  parcelByTracking(trackingNumber: String!): Parcel!
+
+  """Get all parcels"""
+  parcels: [Parcel!]!
+}
+
+input RegisterClienteInput {
+  email: String!
+  nombre: String!
+  password: String!
+}
+
+enum Rol {
+  ADMINISTRADOR
+  BODEGA
+  CLIENTE
+  TAQUILLA
+}
+
+input UpdateParcelStatusInput {
+  """The parcel ID to update"""
+  id: ID!
+
+  """New status for the parcel"""
+  status: ParcelStatus!
+}
+
+type User {
+  activo: Boolean!
+  email: String!
+  id: ID!
+  nombre: String!
+  rol: Rol!
+}
