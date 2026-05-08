@@ -7,6 +7,7 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    seed: "ts-node prisma/seed.ts",
   },
   datasource: {
     // Prisma 7+: connection URLs live in prisma.config.ts (not schema.prisma).

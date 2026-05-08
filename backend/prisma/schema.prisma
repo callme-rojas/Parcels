@@ -10,8 +10,7 @@ enum Rol {
   ADMINISTRADOR
   TAQUILLA
   BODEGA
-  REMITENTE
-  DESTINATARIO
+  CLIENTE
 }
 
 model Usuario {
@@ -19,7 +18,7 @@ model Usuario {
   nombre        String
   email         String   @unique
   passwordHash  String
-  rol           Rol      @default(REMITENTE)
+  rol           Rol      @default(CLIENTE)
   activo        Boolean  @default(true)
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
