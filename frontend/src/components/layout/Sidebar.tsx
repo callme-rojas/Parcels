@@ -4,92 +4,129 @@ import { Rol } from '../../types';
 import {
   LayoutDashboard,
   Package,
-  Ticket,
-  Warehouse,
+  ScanBarcode,
+  ClipboardList,
+  DollarSign,
+  PackageCheck,
+  Truck,
+  Radio,
   MapPin,
   Users,
   BarChart3,
+  AlertTriangle,
+  Building2,
+  HelpCircle,
   LogOut,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+
+interface NavSection {
+  label: string;
+  items: NavEntry[];
+}
 
 interface NavEntry {
   label: string;
   path: string;
-  icon: React.ReactNode;
-  roles: Rol[];
+  icon: ReactNode;
 }
 
-const NAV_ITEMS: NavEntry[] = [
-  {
-    label: 'Dashboard',
-    path: '/dashboard',
-    icon: <LayoutDashboard size={20} />,
-    roles: [Rol.ADMINISTRADOR],
-  },
-  {
-    label: 'Encomiendas',
-    path: '/encomiendas',
-    icon: <Package size={20} />,
-    roles: [Rol.ADMINISTRADOR, Rol.TAQUILLA],
-  },
-  {
-    label: 'Taquilla',
-    path: '/taquilla',
-    icon: <Ticket size={20} />,
-    roles: [Rol.TAQUILLA],
-  },
-  {
-    label: 'Bodega',
-    path: '/bodega',
-    icon: <Warehouse size={20} />,
-    roles: [Rol.BODEGA],
-  },
-  {
-    label: 'Seguimiento',
-    path: '/seguimiento',
-    icon: <MapPin size={20} />,
-    roles: [Rol.ADMINISTRADOR, Rol.TAQUILLA, Rol.BODEGA],
-  },
-  {
-    label: 'Usuarios',
-    path: '/usuarios',
-    icon: <Users size={20} />,
-    roles: [Rol.ADMINISTRADOR],
-  },
-  {
-    label: 'Reportes',
-    path: '/reportes',
-    icon: <BarChart3 size={20} />,
-    roles: [Rol.ADMINISTRADOR],
-  },
-];
+// Navigation structure per role (matching mockups)
+const NAV_BY_ROLE: Record<Rol, NavSection[]> = {
+  [Rol.ADMINISTRADOR]: [
+    {
+      label: 'Gestión',
+      items: [
+        { label: 'Tablero general', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
+        { label: 'Encomiendas', path: '/encomiendas', icon: <Package size={18} /> },
+        { label: 'Buses & rutas', path: '/buses', icon: <Truck size={18} /> },
+        { label: 'Sucursales', path: '/sucursales', icon: <Building2 size={18} /> },
+        { label: 'Usuarios & roles', path: '/usuarios', icon: <Users size={18} /> },
+      ],
+    },
+    {
+      label: 'Análisis',
+      items: [
+        { label: 'Reportes', path: '/reportes', icon: <BarChart3 size={18} /> },
+        { label: 'Incidencias', path: '/incidencias', icon: <AlertTriangle size={18} /> },
+      ],
+    },
+  ],
+  [Rol.TAQUILLA]: [
+    {
+      label: 'Taquilla',
+      items: [
+        { label: 'Recepción / escaneo', path: '/taquilla', icon: <ScanBarcode size={18} /> },
+        { label: 'Encomiendas del turno', path: '/encomiendas', icon: <ClipboardList size={18} /> },
+        { label: 'Cobros del día', path: '/cobros', icon: <DollarSign size={18} /> },
+        { label: 'Entrega al cliente', path: '/entrega', icon: <PackageCheck size={18} /> },
+      ],
+    },
+    {
+      label: 'Soporte',
+      items: [
+        { label: 'Ayuda', path: '/ayuda', icon: <HelpCircle size={18} /> },
+      ],
+    },
+  ],
+  [Rol.BODEGA]: [
+    {
+      label: 'Bodega',
+      items: [
+        { label: 'Encomiendas pendientes', path: '/bodega', icon: <Package size={18} /> },
+        { label: 'Manifiestos & carga', path: '/manifiestos', icon: <ClipboardList size={18} /> },
+        { label: 'Buses & flota', path: '/buses', icon: <Truck size={18} /> },
+        { label: 'Dispositivos IoT', path: '/iot', icon: <Radio size={18} /> },
+      ],
+    },
+    {
+      label: 'Operación',
+      items: [
+        { label: 'Tránsito en vivo', path: '/seguimiento', icon: <MapPin size={18} /> },
+      ],
+    },
+  ],
+  [Rol.REMITENTE]: [
+    {
+      label: 'Mis envíos',
+      items: [
+        { label: 'Seguimiento', path: '/seguimiento', icon: <MapPin size={18} /> },
+      ],
+    },
+  ],
+  [Rol.DESTINATARIO]: [
+    {
+      label: 'Mis envíos',
+      items: [
+        { label: 'Seguimiento', path: '/seguimiento', icon: <MapPin size={18} /> },
+      ],
+    },
+  ],
+};
+
+const rolLabels: Record<Rol, string> = {
+  [Rol.ADMINISTRADOR]: 'Administrador',
+  [Rol.TAQUILLA]: 'Taquilla',
+  [Rol.BODEGA]: 'Bodega',
+  [Rol.REMITENTE]: 'Remitente',
+  [Rol.DESTINATARIO]: 'Destinatario',
+};
 
 export default function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const [collapsed, setCollapsed] = useState(false);
 
-  const filteredNav = NAV_ITEMS.filter(
-    (item) => user && item.roles.includes(user.rol)
-  );
-
-  const rolLabels: Record<Rol, string> = {
-    [Rol.ADMINISTRADOR]: 'Administrador',
-    [Rol.TAQUILLA]: 'Taquilla',
-    [Rol.BODEGA]: 'Bodega',
-    [Rol.REMITENTE]: 'Remitente',
-    [Rol.DESTINATARIO]: 'Destinatario',
-  };
+  const sections = user ? NAV_BY_ROLE[user.rol] || [] : [];
 
   return (
     <aside className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''}`}>
       {/* Brand */}
       <div className="sidebar__brand">
         <div className="sidebar__logo">
-          <Package size={28} strokeWidth={2.5} />
+          <Package size={20} strokeWidth={2.5} />
         </div>
         {!collapsed && (
           <div className="sidebar__brand-text">
@@ -102,58 +139,54 @@ export default function Sidebar() {
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
         >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
       </div>
 
       {/* Navigation */}
       <nav className="sidebar__nav">
-        {filteredNav.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
-            }
-            title={collapsed ? item.label : undefined}
-          >
-            <span className="sidebar__link-icon">{item.icon}</span>
+        {sections.map((section) => (
+          <div key={section.label}>
             {!collapsed && (
-              <span className="sidebar__link-label">{item.label}</span>
+              <div className="sidebar__section-label">{section.label}</div>
             )}
-          </NavLink>
+            {section.items.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
+                }
+                title={collapsed ? item.label : undefined}
+              >
+                <span className="sidebar__link-icon">{item.icon}</span>
+                {!collapsed && (
+                  <span className="sidebar__link-label">{item.label}</span>
+                )}
+              </NavLink>
+            ))}
+          </div>
         ))}
       </nav>
 
       {/* User info + Logout */}
       <div className="sidebar__footer">
-        {user && !collapsed && (
+        {user && (
           <div className="sidebar__user">
             <div className="sidebar__user-avatar">
-              {user.nombre.charAt(0).toUpperCase()}
+              {user.nombre.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </div>
-            <div className="sidebar__user-info">
-              <span className="sidebar__user-name">{user.nombre}</span>
-              <span className="sidebar__user-role">
-                {rolLabels[user.rol]}
-              </span>
-            </div>
+            {!collapsed && (
+              <div className="sidebar__user-info">
+                <span className="sidebar__user-name">{user.nombre}</span>
+                <span className="sidebar__user-role">{rolLabels[user.rol]}</span>
+              </div>
+            )}
           </div>
         )}
-        {user && collapsed && (
-          <div className="sidebar__user">
-            <div className="sidebar__user-avatar">
-              {user.nombre.charAt(0).toUpperCase()}
-            </div>
-          </div>
-        )}
-        <button
-          className="sidebar__logout"
-          onClick={logout}
-          title="Cerrar sesión"
-        >
+        <button className="sidebar__logout" onClick={logout} title="Cerrar sesión">
           <LogOut size={18} />
-          {!collapsed && <span>Salir</span>}
+          {!collapsed && <span>Cerrar sesión</span>}
         </button>
       </div>
     </aside>

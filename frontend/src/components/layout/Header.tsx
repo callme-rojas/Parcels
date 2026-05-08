@@ -3,13 +3,18 @@ import { Bell, Search } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard': 'Dashboard',
+  '/dashboard': 'Tablero · Resumen operativo',
   '/encomiendas': 'Encomiendas',
-  '/taquilla': 'Taquilla',
-  '/bodega': 'Bodega',
-  '/seguimiento': 'Seguimiento',
-  '/usuarios': 'Usuarios',
+  '/taquilla': 'Taquilla · Recepción de encomiendas',
+  '/bodega': 'Bodega · Encomiendas pendientes',
+  '/manifiestos': 'Manifiestos & carga',
+  '/seguimiento': 'Seguimiento en vivo',
+  '/usuarios': 'Usuarios & roles',
   '/reportes': 'Reportes',
+  '/buses': 'Buses & rutas',
+  '/sucursales': 'Sucursales',
+  '/entrega': 'Entrega al cliente',
+  '/cobros': 'Cobros del día',
 };
 
 export default function Header() {
