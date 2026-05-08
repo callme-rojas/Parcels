@@ -550,6 +550,90 @@ body {
 .rastreo-stat__label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
 .rastreo-stat__value { font-size: 16px; font-weight: 700; color: var(--text-primary); }
 
+/* ─── Create Shipment Form ──────────────────────────────── */
+.envio-container { max-width: 680px; margin: 32px auto; padding: 0 24px; }
+
+.envio-stepper {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; margin-bottom: 28px;
+}
+.envio-stepper__step {
+  display: flex; align-items: center; gap: 8px; position: relative;
+}
+.envio-stepper__dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bg-page); border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: var(--text-muted);
+  transition: all 0.3s;
+}
+.envio-stepper__step--active .envio-stepper__dot {
+  background: var(--navy); border-color: var(--navy); color: white;
+}
+.envio-stepper__step--done .envio-stepper__dot {
+  background: var(--success); border-color: var(--success); color: white;
+}
+.envio-stepper__label {
+  font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap;
+}
+.envio-stepper__step--active .envio-stepper__label { color: var(--navy); }
+.envio-stepper__step--done .envio-stepper__label { color: var(--success); }
+.envio-stepper__line {
+  width: 40px; height: 2px; background: var(--border); margin: 0 10px;
+}
+.envio-stepper__step--done .envio-stepper__line { background: var(--success); }
+
+.envio-card {
+  background: var(--bg-white); border: 1px solid var(--border);
+  border-radius: 14px; padding: 32px; box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.3s ease;
+}
+.envio-card__title { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.envio-card__desc { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+
+.envio-form { display: flex; flex-direction: column; gap: 16px; }
+.envio-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.envio-card__actions {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border);
+}
+
+/* ─── Label Preview ─────────────────────────────────────── */
+.envio-success { text-align: center; animation: fadeIn 0.5s ease; }
+.envio-success .envio-card__title { margin-top: 12px; }
+
+.envio-label {
+  background: white; border: 2px dashed var(--border);
+  border-radius: var(--radius); padding: 24px; margin: 24px auto;
+  max-width: 400px; text-align: center;
+}
+.envio-label__header {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  color: var(--navy); font-size: 14px; margin-bottom: 10px;
+}
+.envio-label__code {
+  font-family: monospace; font-size: 20px; font-weight: 800;
+  color: var(--navy); margin-bottom: 12px; letter-spacing: 1px;
+}
+.envio-label__barcode { margin: 12px auto 16px; }
+.envio-label__bars {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 1px; height: 50px;
+}
+.envio-label__bar { background: var(--navy-dark); border-radius: 0; }
+
+.envio-label__grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  text-align: left; border-top: 1px solid var(--border);
+  padding-top: 12px; margin-top: 12px;
+}
+.envio-label__grid > div span {
+  font-size: 10px; text-transform: uppercase; color: var(--text-muted);
+  display: block; letter-spacing: 0.5px;
+}
+.envio-label__grid > div strong { font-size: 13px; color: var(--text-primary); }
+
 /* ─── Responsive ────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }

@@ -12,6 +12,7 @@ import RoleRoute from './components/auth/RoleRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import RastreoPublicoPage from './pages/RastreoPublicoPage';
+import CrearEnvioPage from './pages/CrearEnvioPage';
 import NotFoundPage from './pages/NotFoundPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 
@@ -45,6 +46,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/registro" element={<RegisterPage />} />
       <Route path="/rastreo" element={<RastreoPublicoPage />} />
+      <Route path="/enviar" element={<CrearEnvioPage />} />
       <Route path="/no-autorizado" element={<UnauthorizedPage />} />
 
       {/* ── Protected routes (auth required) ─────── */}
@@ -78,7 +80,7 @@ function AppRoutes() {
           {/* USUARIO routes */}
           <Route element={<RoleRoute allowedRoles={[Rol.USUARIO]} />}>
             <Route path="/mis-envios" element={<MisEnviosPage />} />
-            <Route path="/crear-envio" element={<EncomiendasPage />} />
+            <Route path="/crear-envio" element={<CrearEnvioPage />} />
           </Route>
 
         </Route>

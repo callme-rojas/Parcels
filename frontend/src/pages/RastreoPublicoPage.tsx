@@ -68,6 +68,7 @@ export default function RastreoPublicoPage() {
         </div>
         <div className="rastreo-nav__links">
           <a href="/rastreo" className="rastreo-nav__link rastreo-nav__link--active">Rastrear</a>
+          <a href="/enviar" className="rastreo-nav__link">Enviar paquete</a>
           <a href="/login" className="btn btn--primary btn--sm">Iniciar sesión</a>
         </div>
       </nav>

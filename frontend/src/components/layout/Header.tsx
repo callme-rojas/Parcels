@@ -15,6 +15,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/sucursales': 'Sucursales',
   '/entrega': 'Entrega al cliente',
   '/cobros': 'Cobros del día',
+  '/mis-envios': 'Mis Envíos',
+  '/crear-envio': 'Nuevo Envío',
 };
 
 export default function Header() {
