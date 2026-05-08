@@ -3,8 +3,7 @@ export enum Rol {
   ADMINISTRADOR = 'ADMINISTRADOR',
   TAQUILLA = 'TAQUILLA',
   BODEGA = 'BODEGA',
-  REMITENTE = 'REMITENTE',
-  DESTINATARIO = 'DESTINATARIO',
+  USUARIO = 'USUARIO', // Usuario común: puede enviar y recibir
 }
 
 // ─── Estados de encomienda ────────────────────────────────────
@@ -25,6 +24,8 @@ export interface Usuario {
   email: string;
   rol: Rol;
   activo: boolean;
+  telefono?: string;
+  ci?: string;
 }
 
 export interface Oficina {
@@ -43,17 +44,8 @@ export interface Ruta {
   activa: boolean;
 }
 
-export interface Remitente {
-  id: string;
-  nombre: string;
-  apellido: string;
-  ci: string;
-  telefono: string;
-  email?: string;
-}
-
-export interface Destinatario {
-  id: string;
+// Destinatario NO requiere cuenta — solo datos de contacto
+export interface DatosDestinatario {
   nombre: string;
   apellido: string;
   ci: string;
@@ -72,11 +64,12 @@ export interface EventoEstado {
 export interface Encomienda {
   id: string;
   codigo: string;
-  remitente: Remitente;
-  destinatario: Destinatario;
+  remitente: Usuario;          // El usuario logueado que envía
+  destinatario: DatosDestinatario; // Datos ingresados, no necesita cuenta
   ruta: Ruta;
   descripcion: string;
   peso: number;
+  contenido?: string;
   observaciones?: string;
   estadoActual: EstadoEncomienda;
   eventos: EventoEstado[];
@@ -89,12 +82,4 @@ export interface Bus {
   placa: string;
   modelo: string;
   activo: boolean;
-}
-
-// ─── Navigation item type ─────────────────────────────────────
-export interface NavItem {
-  label: string;
-  path: string;
-  icon: string;
-  roles: Rol[];
 }

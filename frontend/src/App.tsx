@@ -8,7 +8,14 @@ import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleRoute from './components/auth/RoleRoute';
 
+// Public pages (no auth needed)
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import RastreoPublicoPage from './pages/RastreoPublicoPage';
+import NotFoundPage from './pages/NotFoundPage';
+import UnauthorizedPage from './pages/UnauthorizedPage';
+
+// Internal pages
 import DashboardPage from './pages/DashboardPage';
 import TaquillaPage from './pages/TaquillaPage';
 import BodegaPage from './pages/BodegaPage';
@@ -16,29 +23,31 @@ import EncomiendasPage from './pages/EncomiendasPage';
 import SeguimientoPage from './pages/SeguimientoPage';
 import UsuariosPage from './pages/UsuariosPage';
 import ReportesPage from './pages/ReportesPage';
-import NotFoundPage from './pages/NotFoundPage';
-import UnauthorizedPage from './pages/UnauthorizedPage';
+import MisEnviosPage from './pages/MisEnviosPage';
 
 function AppRoutes() {
   const user = useAuthStore((s) => s.user);
 
   const getDefaultRoute = () => {
-    if (!user) return '/login';
+    if (!user) return '/rastreo';
     switch (user.rol) {
       case Rol.ADMINISTRADOR: return '/dashboard';
       case Rol.TAQUILLA: return '/taquilla';
       case Rol.BODEGA: return '/bodega';
-      default: return '/seguimiento';
+      case Rol.USUARIO: return '/mis-envios';
+      default: return '/rastreo';
     }
   };
 
   return (
     <Routes>
-      {/* Public routes */}
+      {/* ── Public routes (no auth) ──────────────── */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/registro" element={<RegisterPage />} />
+      <Route path="/rastreo" element={<RastreoPublicoPage />} />
       <Route path="/no-autorizado" element={<UnauthorizedPage />} />
 
-      {/* Protected routes */}
+      {/* ── Protected routes (auth required) ─────── */}
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
 
@@ -52,22 +61,30 @@ function AppRoutes() {
           {/* Taquilla routes */}
           <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR, Rol.TAQUILLA]} />}>
             <Route path="/taquilla" element={<TaquillaPage />} />
-            <Route path="/encomiendas" element={<EncomiendasPage />} />
+            <Route path="/entrega" element={<EncomiendasPage />} />
           </Route>
 
           {/* Bodega routes */}
-          <Route element={<RoleRoute allowedRoles={[Rol.BODEGA]} />}>
+          <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR, Rol.BODEGA]} />}>
             <Route path="/bodega" element={<BodegaPage />} />
           </Route>
 
-          {/* Shared routes */}
-          <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR, Rol.TAQUILLA, Rol.BODEGA]} />}>
+          {/* Shared internal routes (all authenticated roles) */}
+          <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR, Rol.TAQUILLA, Rol.BODEGA, Rol.USUARIO]} />}>
+            <Route path="/encomiendas" element={<EncomiendasPage />} />
             <Route path="/seguimiento" element={<SeguimientoPage />} />
           </Route>
+
+          {/* USUARIO routes */}
+          <Route element={<RoleRoute allowedRoles={[Rol.USUARIO]} />}>
+            <Route path="/mis-envios" element={<MisEnviosPage />} />
+            <Route path="/crear-envio" element={<EncomiendasPage />} />
+          </Route>
+
         </Route>
       </Route>
 
-      {/* Redirects */}
+      {/* ── Redirects ────────────────────────────── */}
       <Route path="/" element={<Navigate to={getDefaultRoute()} replace />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

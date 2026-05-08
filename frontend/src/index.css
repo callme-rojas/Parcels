@@ -411,10 +411,154 @@ body {
   padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
 }
 
+/* ─── Public Tracking Page (Rastreo) ────────────────────── */
+.rastreo-page { min-height: 100vh; background: var(--bg-white); }
+
+.rastreo-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 32px; background: var(--bg-white); border-bottom: 1px solid var(--border);
+}
+.rastreo-nav__left { display: flex; align-items: center; gap: 10px; }
+.rastreo-nav__logo {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  background: var(--navy); display: flex; align-items: center; justify-content: center; color: white;
+}
+.rastreo-nav__brand { font-weight: 700; font-size: 16px; color: var(--navy); }
+.rastreo-nav__brand span { font-weight: 400; color: var(--text-secondary); }
+.rastreo-nav__links { display: flex; align-items: center; gap: 20px; }
+.rastreo-nav__link {
+  text-decoration: none; font-size: 14px; font-weight: 500; color: var(--text-secondary);
+  padding: 4px 0; border-bottom: 2px solid transparent; transition: all var(--transition);
+}
+.rastreo-nav__link--active { color: var(--navy); border-bottom-color: var(--navy); }
+
+.rastreo-hero {
+  background: var(--navy); padding: 48px 32px 40px;
+  display: grid; grid-template-columns: 1fr 400px; gap: 32px; align-items: start;
+}
+.rastreo-hero__title { font-size: 28px; font-weight: 800; color: white; line-height: 1.3; margin-bottom: 12px; }
+.rastreo-hero__highlight { color: var(--gold-light); }
+.rastreo-hero__desc { font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 24px; max-width: 520px; }
+
+.rastreo-search {
+  display: flex; gap: 10px; align-items: center;
+}
+.rastreo-search__input {
+  flex: 1; padding: 12px 16px; border-radius: var(--radius-sm);
+  border: 2px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1);
+  color: white; font-size: 15px; font-family: monospace; font-weight: 600;
+  outline: none; transition: border-color var(--transition);
+}
+.rastreo-search__input:focus { border-color: var(--gold); }
+.rastreo-search__input::placeholder { color: rgba(255,255,255,0.4); }
+
+.rastreo-hero__stats {
+  display: flex; gap: 20px; margin-top: 20px; font-size: 12px; color: rgba(255,255,255,0.6);
+}
+.rastreo-hero__dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px;
+}
+.rastreo-hero__dot--green { background: var(--success); }
+.rastreo-hero__dot--amber { background: var(--gold); }
+.rastreo-hero__dot--blue { background: var(--info); }
+
+/* Result card */
+.rastreo-result {
+  background: var(--bg-white); border-radius: var(--radius); padding: 24px;
+  box-shadow: var(--shadow-md); animation: fadeIn 0.4s ease;
+}
+.rastreo-result--loading { display: flex; flex-direction: column; min-height: 200px; justify-content: center; }
+.rastreo-result__header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.rastreo-result__code { font-family: monospace; font-size: 18px; font-weight: 700; color: var(--navy); }
+.rastreo-result__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+.rastreo-result__label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 2px; }
+.rastreo-result__value { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+/* Route progress */
+.rastreo-route { display: flex; align-items: flex-start; gap: 0; padding: 12px 0; position: relative; }
+.rastreo-route__stop { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; }
+.rastreo-route__dot {
+  width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--border);
+  background: white; position: relative; z-index: 2; transition: all 0.3s;
+}
+.rastreo-route__stop--passed .rastreo-route__dot { background: var(--navy); border-color: var(--navy); }
+.rastreo-route__stop--current .rastreo-route__dot { background: var(--gold); border-color: var(--gold); width: 18px; height: 18px; }
+.rastreo-route__line {
+  position: absolute; top: 6px; left: 50%; width: 100%; height: 3px;
+  background: var(--border); z-index: 1;
+}
+.rastreo-route__stop--passed .rastreo-route__line { background: var(--navy); }
+.rastreo-route__name { font-size: 10px; color: var(--text-muted); margin-top: 6px; text-align: center; }
+.rastreo-route__stop--current .rastreo-route__name { color: var(--navy); font-weight: 600; }
+
+/* Timeline sections */
+.rastreo-timeline-section {
+  display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px;
+  padding: 32px; max-width: 1200px; margin: 0 auto;
+}
+.rastreo-info-panel, .rastreo-timeline-panel {
+  background: var(--bg-white); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-sm);
+}
+.rastreo-info-panel h3, .rastreo-timeline-panel h3 { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 16px; }
+.rastreo-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* Timeline */
+.rastreo-timeline { display: flex; flex-direction: column; gap: 0; }
+.rastreo-timeline__item {
+  display: flex; align-items: flex-start; gap: 14px; padding: 10px 0;
+  position: relative;
+}
+.rastreo-timeline__item::before {
+  content: ''; position: absolute; left: 7px; top: 28px; bottom: -10px;
+  width: 2px; background: var(--border);
+}
+.rastreo-timeline__item:last-child::before { display: none; }
+.rastreo-timeline__item--done::before { background: var(--success); }
+.rastreo-timeline__dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--border); flex-shrink: 0; margin-top: 2px; position: relative; z-index: 2;
+}
+.rastreo-timeline__item--done .rastreo-timeline__dot { background: var(--success); }
+.rastreo-timeline__item--current .rastreo-timeline__dot { background: var(--gold); box-shadow: 0 0 0 4px var(--gold-pale); }
+.rastreo-timeline__content { flex: 1; }
+.rastreo-timeline__content strong { font-size: 13px; display: block; }
+.rastreo-timeline__detail { font-size: 12px; color: var(--text-muted); }
+.rastreo-timeline__date { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+/* Steps */
+.rastreo-steps {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+  padding: 40px 32px; max-width: 1200px; margin: 0 auto;
+}
+.rastreo-step {
+  background: var(--bg-page); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px;
+}
+.rastreo-step h3 { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+.rastreo-step p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+/* Stats bar */
+.rastreo-stats-bar {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  padding: 0 32px 40px; max-width: 1200px; margin: 0 auto;
+}
+.rastreo-stat {
+  background: var(--bg-page); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px;
+}
+.rastreo-stat__label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 4px; }
+.rastreo-stat__value { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+
 /* ─── Responsive ────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
   .app-layout__main { margin-left: 0 !important; }
   .dashboard__charts { grid-template-columns: 1fr; }
   .topbar__search { display: none; }
+  .rastreo-hero { grid-template-columns: 1fr; }
+  .rastreo-search { flex-direction: column; }
+  .rastreo-timeline-section { grid-template-columns: 1fr; }
+  .rastreo-steps { grid-template-columns: 1fr; }
+  .rastreo-stats-bar { grid-template-columns: 1fr 1fr; }
 }

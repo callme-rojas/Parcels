@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { Rol } from '../types';
 import { Package, Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -8,8 +8,7 @@ const ROLE_REDIRECTS: Record<Rol, string> = {
   [Rol.ADMINISTRADOR]: '/dashboard',
   [Rol.TAQUILLA]: '/taquilla',
   [Rol.BODEGA]: '/bodega',
-  [Rol.REMITENTE]: '/seguimiento',
-  [Rol.DESTINATARIO]: '/seguimiento',
+  [Rol.USUARIO]: '/mis-envios',
 };
 
 export default function LoginPage() {
@@ -164,7 +163,27 @@ export default function LoginPage() {
               <span className="login-card__hint-role">Bodega</span>
               <span className="login-card__hint-email">bodega@travell.com</span>
             </button>
+            <button
+              type="button"
+              className="login-card__hint-item"
+              onClick={() => {
+                setEmail('rosa@email.com');
+                setPassword('rosa123');
+              }}
+            >
+              <span className="login-card__hint-role">Usuario</span>
+              <span className="login-card__hint-email">rosa@email.com</span>
+            </button>
           </div>
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 16 }}>
+          <p style={{ fontSize: 13, color: '#6B7280' }}>
+            ¿No tienes cuenta?{' '}
+            <Link to="/registro" style={{ color: '#1B3A6B', fontWeight: 600, textDecoration: 'none' }}>
+              Regístrate aquí
+            </Link>
+          </p>
         </div>
       </div>
     </div>

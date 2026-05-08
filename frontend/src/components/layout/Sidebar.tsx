@@ -19,6 +19,8 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Plus,
+  Search,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
@@ -88,19 +90,19 @@ const NAV_BY_ROLE: Record<Rol, NavSection[]> = {
       ],
     },
   ],
-  [Rol.REMITENTE]: [
+  [Rol.USUARIO]: [
     {
       label: 'Mis envíos',
       items: [
-        { label: 'Seguimiento', path: '/seguimiento', icon: <MapPin size={18} /> },
+        { label: 'Mis encomiendas', path: '/mis-envios', icon: <Package size={18} /> },
+        { label: 'Nuevo envío', path: '/crear-envio', icon: <Plus size={18} /> },
+        { label: 'Rastrear envío', path: '/rastreo', icon: <Search size={18} /> },
       ],
     },
-  ],
-  [Rol.DESTINATARIO]: [
     {
-      label: 'Mis envíos',
+      label: 'Soporte',
       items: [
-        { label: 'Seguimiento', path: '/seguimiento', icon: <MapPin size={18} /> },
+        { label: 'Ayuda', path: '/ayuda', icon: <HelpCircle size={18} /> },
       ],
     },
   ],
@@ -110,8 +112,7 @@ const rolLabels: Record<Rol, string> = {
   [Rol.ADMINISTRADOR]: 'Administrador',
   [Rol.TAQUILLA]: 'Taquilla',
   [Rol.BODEGA]: 'Bodega',
-  [Rol.REMITENTE]: 'Remitente',
-  [Rol.DESTINATARIO]: 'Destinatario',
+  [Rol.USUARIO]: 'Usuario',
 };
 
 export default function Sidebar() {
