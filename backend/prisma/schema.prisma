@@ -13,6 +13,13 @@ enum Rol {
   CLIENTE
 }
 
+enum ParcelStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
 model Usuario {
   id            String   @id @default(uuid()) @db.Uuid
   nombre        String
@@ -24,4 +31,29 @@ model Usuario {
   actualizadoEn DateTime @updatedAt
 
   @@map("usuarios")
+}
+
+model Parcel {
+  id               String        @id @default(uuid()) @db.Uuid
+  trackingNumber  String        @unique
+
+  senderName       String
+  recipientName    String
+
+  originAddress    String
+  destinationAddress String
+
+  originLng        Float
+  originLat        Float
+  destinationLng   Float
+  destinationLat   Float
+
+  weight           Float
+
+  status           ParcelStatus @default(PENDING)
+
+  createdAt        DateTime     @default(now())
+  deliveredAt      DateTime?
+
+  @@map("parcels")
 }

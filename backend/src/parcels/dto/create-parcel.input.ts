@@ -8,23 +8,28 @@ export class CreateParcelInput {
   @Field({ description: 'Recipient name' })
   recipientName!: string;
 
-  @Field({ description: 'Origin address' })
-  originAddress!: string;
+  // Code of the route used in the frontend (e.g. "SCZ-PQA").
+  // If provided, backend can infer origin/destination addresses + coordinates.
+  @Field({ nullable: true, description: 'Route code (SCZ-PQA, ...)' })
+  routeCode?: string;
 
-  @Field({ description: 'Destination address' })
-  destinationAddress!: string;
+  @Field({ nullable: true, description: 'Origin address' })
+  originAddress?: string;
 
-  @Field(() => Float, { description: 'Origin longitude' })
-  originLng!: number;
+  @Field({ nullable: true, description: 'Destination address' })
+  destinationAddress?: string;
 
-  @Field(() => Float, { description: 'Origin latitude' })
-  originLat!: number;
+  @Field(() => Float, { nullable: true, description: 'Origin longitude' })
+  originLng?: number;
 
-  @Field(() => Float, { description: 'Destination longitude' })
-  destinationLng!: number;
+  @Field(() => Float, { nullable: true, description: 'Origin latitude' })
+  originLat?: number;
 
-  @Field(() => Float, { description: 'Destination latitude' })
-  destinationLat!: number;
+  @Field(() => Float, { nullable: true, description: 'Destination longitude' })
+  destinationLng?: number;
+
+  @Field(() => Float, { nullable: true, description: 'Destination latitude' })
+  destinationLat?: number;
 
   @Field(() => Float, { description: 'Weight in kg' })
   weight!: number;

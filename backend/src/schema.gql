@@ -16,25 +16,28 @@ input CrearUsuarioInput {
 
 input CreateParcelInput {
   """Destination address"""
-  destinationAddress: String!
+  destinationAddress: String
 
   """Destination latitude"""
-  destinationLat: Float!
+  destinationLat: Float
 
   """Destination longitude"""
-  destinationLng: Float!
+  destinationLng: Float
 
   """Origin address"""
-  originAddress: String!
+  originAddress: String
 
   """Origin latitude"""
-  originLat: Float!
+  originLat: Float
 
   """Origin longitude"""
-  originLng: Float!
+  originLng: Float
 
   """Recipient name"""
   recipientName: String!
+
+  """Route code (SCZ-PQA, ...)"""
+  routeCode: String
 
   """Sender name"""
   senderName: String!

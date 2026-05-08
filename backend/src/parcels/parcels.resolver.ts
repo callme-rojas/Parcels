@@ -9,12 +9,12 @@ export class ParcelsResolver {
   constructor(private readonly parcelsService: ParcelsService) {}
 
   @Query(() => [Parcel], { name: 'parcels', description: 'Get all parcels' })
-  findAll(): Parcel[] {
+  findAll(): Promise<Parcel[]> {
     return this.parcelsService.findAll();
   }
 
   @Query(() => Parcel, { name: 'parcel', description: 'Get a parcel by ID' })
-  findOne(@Args('id', { type: () => ID }) id: string): Parcel {
+  findOne(@Args('id', { type: () => ID }) id: string): Promise<Parcel> {
     return this.parcelsService.findOne(id);
   }
 
@@ -24,24 +24,26 @@ export class ParcelsResolver {
   })
   findByTrackingNumber(
     @Args('trackingNumber') trackingNumber: string,
-  ): Parcel {
+  ): Promise<Parcel> {
     return this.parcelsService.findByTrackingNumber(trackingNumber);
   }
 
   @Mutation(() => Parcel, { description: 'Create a new parcel' })
-  createParcel(@Args('input') input: CreateParcelInput): Parcel {
+  createParcel(@Args('input') input: CreateParcelInput): Promise<Parcel> {
     return this.parcelsService.create(input);
   }
 
   @Mutation(() => Parcel, { description: 'Update parcel status' })
   updateParcelStatus(
     @Args('input') input: UpdateParcelStatusInput,
-  ): Parcel {
+  ): Promise<Parcel> {
     return this.parcelsService.updateStatus(input);
   }
 
   @Mutation(() => Boolean, { description: 'Delete a parcel' })
-  removeParcel(@Args('id', { type: () => ID }) id: string): boolean {
+  removeParcel(
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<boolean> {
     return this.parcelsService.remove(id);
   }
 }
