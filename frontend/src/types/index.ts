@@ -3,7 +3,7 @@ export enum Rol {
   ADMINISTRADOR = 'ADMINISTRADOR',
   TAQUILLA = 'TAQUILLA',
   BODEGA = 'BODEGA',
-  USUARIO = 'USUARIO', // Usuario común: puede enviar y recibir
+  CLIENTE = 'CLIENTE', // Usuario común: puede enviar y recibir
 }
 
 // ─── Estados de encomienda ────────────────────────────────────

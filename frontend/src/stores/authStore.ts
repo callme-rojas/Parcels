@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Usuario } from '../types';
 import { Rol } from '../types';
+import client from '../graphql/client';
+import { LOGIN_MUTATION, REGISTER_CLIENT_MUTATION } from '../graphql/mutations';
 
 interface AuthState {
   user: Usuario | null;
@@ -12,26 +14,6 @@ interface AuthState {
   logout: () => void;
 }
 
-// ─── Mock users for development (remove when backend is ready) ───
-const MOCK_USERS: Record<string, { password: string; user: Usuario }> = {
-  'admin@travell.com': {
-    password: 'admin123',
-    user: { id: '1', nombre: 'Jorge Montenegro', email: 'admin@travell.com', rol: Rol.ADMINISTRADOR, activo: true },
-  },
-  'taquilla@travell.com': {
-    password: 'taquilla123',
-    user: { id: '2', nombre: 'Carla Gutiérrez', email: 'taquilla@travell.com', rol: Rol.TAQUILLA, activo: true },
-  },
-  'bodega@travell.com': {
-    password: 'bodega123',
-    user: { id: '3', nombre: 'Edwin Mamani', email: 'bodega@travell.com', rol: Rol.BODEGA, activo: true },
-  },
-  'rosa@email.com': {
-    password: 'rosa123',
-    user: { id: '4', nombre: 'Rosa Méndez S.', email: 'rosa@email.com', rol: Rol.USUARIO, activo: true, telefono: '+591 7234-8821' },
-  },
-};
-
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -40,48 +22,62 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       login: async (email: string, password: string) => {
-        // TODO: Replace with real GraphQL mutation
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        try {
+          const { data } = await client.mutate<{ login: { accessToken: string; user: Usuario } }>({
+            mutation: LOGIN_MUTATION,
+            variables: {
+              input: { email, password }
+            }
+          });
 
-        const mockEntry = MOCK_USERS[email];
-        if (!mockEntry || mockEntry.password !== password) {
-          throw new Error('Credenciales inválidas. Verifica tu correo y contraseña.');
+          if (!data) throw new Error("No data returned");
+          const { accessToken, user } = data.login;
+
+          set({
+            user: user,
+            token: accessToken,
+            isAuthenticated: true,
+          });
+          
+          // Clear apollo cache on login
+          client.resetStore();
+        } catch (error: any) {
+          throw new Error(error.message || 'Credenciales inválidas o error en el servidor.');
         }
-
-        set({
-          user: mockEntry.user,
-          token: 'mock-jwt-token-' + mockEntry.user.id,
-          isAuthenticated: true,
-        });
       },
 
-      register: async (nombre: string, email: string, _password: string, telefono?: string) => {
-        // TODO: Replace with real GraphQL mutation
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+      register: async (nombre: string, email: string, password: string, telefono?: string) => {
+        try {
+          const { data } = await client.mutate<{ registerCliente: { accessToken: string; user: Usuario } }>({
+            mutation: REGISTER_CLIENT_MUTATION,
+            variables: {
+              input: {
+                nombre,
+                email,
+                password,
+              }
+            }
+          });
 
-        if (MOCK_USERS[email]) {
-          throw new Error('Ya existe una cuenta con este correo electrónico.');
+          if (!data) throw new Error("No data returned");
+          const { accessToken, user } = data.registerCliente;
+
+          set({
+            user: user,
+            token: accessToken,
+            isAuthenticated: true,
+          });
+          
+          // Clear apollo cache on login
+          client.resetStore();
+        } catch (error: any) {
+          throw new Error(error.message || 'Error al registrar el usuario.');
         }
-
-        const newUser: Usuario = {
-          id: 'new-' + Date.now(),
-          nombre,
-          email,
-          rol: Rol.USUARIO,
-          activo: true,
-          telefono,
-        };
-
-        // In real app, the backend would create the user and return a token
-        set({
-          user: newUser,
-          token: 'mock-jwt-token-' + newUser.id,
-          isAuthenticated: true,
-        });
       },
 
       logout: () => {
         set({ user: null, token: null, isAuthenticated: false });
+        client.resetStore();
       },
     }),
     {

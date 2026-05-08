@@ -35,7 +35,7 @@ function AppRoutes() {
       case Rol.ADMINISTRADOR: return '/dashboard';
       case Rol.TAQUILLA: return '/taquilla';
       case Rol.BODEGA: return '/bodega';
-      case Rol.USUARIO: return '/mis-envios';
+      case Rol.CLIENTE: return '/mis-envios';
       default: return '/rastreo';
     }
   };
@@ -72,13 +72,13 @@ function AppRoutes() {
           </Route>
 
           {/* Shared internal routes (all authenticated roles) */}
-          <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR, Rol.TAQUILLA, Rol.BODEGA, Rol.USUARIO]} />}>
+          <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR, Rol.TAQUILLA, Rol.BODEGA, Rol.CLIENTE]} />}>
             <Route path="/encomiendas" element={<EncomiendasPage />} />
             <Route path="/seguimiento" element={<SeguimientoPage />} />
           </Route>
 
-          {/* USUARIO routes */}
-          <Route element={<RoleRoute allowedRoles={[Rol.USUARIO]} />}>
+          {/* CLIENTE routes */}
+          <Route element={<RoleRoute allowedRoles={[Rol.CLIENTE]} />}>
             <Route path="/mis-envios" element={<MisEnviosPage />} />
             <Route path="/crear-envio" element={<CrearEnvioPage />} />
           </Route>
