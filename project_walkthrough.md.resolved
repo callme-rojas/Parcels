@@ -1,0 +1,88 @@
+# ✅ Proyecto Monorepo Creado — Travell Encomiendas 2026
+
+## Estructura Final
+
+```
+Parcels/
+├── .gitignore
+├── README.md
+│
+├── backend/                          ← NestJS + TypeScript + GraphQL
+│   ├── src/
+│   │   ├── main.ts                   ← Entry point (CORS habilitado)
+│   │   ├── app.module.ts             ← GraphQL Apollo Driver configurado
+│   │   └── parcels/
+│   │       ├── parcels.module.ts
+│   │       ├── parcels.resolver.ts   ← Queries & Mutations GraphQL
+│   │       ├── parcels.service.ts    ← Lógica de negocio + datos seed
+│   │       ├── dto/
+│   │       │   ├── create-parcel.input.ts
+│   │       │   └── update-parcel-status.input.ts
+│   │       └── entities/
+│   │           └── parcel.entity.ts  ← ObjectType GraphQL con geo-campos
+│   ├── .env
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── frontend/                         ← React + JS + Mapbox GL JS
+│   ├── src/
+│   │   ├── main.jsx                  ← Entry con ApolloProvider
+│   │   ├── App.jsx                   ← Dashboard principal
+│   │   ├── index.css                 ← Design system global
+│   │   ├── graphql/
+│   │   │   ├── client.js             ← Apollo Client configurado
+│   │   │   └── queries.js            ← Queries & Mutations GQL
+│   │   └── components/
+│   │       ├── Map/
+│   │       │   ├── Map.jsx           ← Mapa Mapbox con marcadores
+│   │       │   └── Map.css
+│   │       └── ParcelList/
+│   │           ├── ParcelList.jsx    ← Sidebar de encomiendas
+│   │           └── ParcelList.css
+│   ├── .env
+│   ├── package.json
+│   └── vite.config.js
+```
+
+## Cómo Ejecutar
+
+### 1. Backend (Terminal 1)
+```bash
+cd backend
+npm run start:dev
+```
+> GraphQL Playground: http://localhost:3000/graphql
+
+### 2. Frontend (Terminal 2)
+```bash
+cd frontend
+npm run dev
+```
+> App: http://localhost:5173
+
+## API GraphQL Disponible
+
+| Operación | Tipo | Descripción |
+|---|---|---|
+| `parcels` | Query | Todas las encomiendas |
+| `parcel(id)` | Query | Una encomienda por ID |
+| `parcelByTracking(trackingNumber)` | Query | Buscar por número de tracking |
+| `createParcel(input)` | Mutation | Crear nueva encomienda |
+| `updateParcelStatus(input)` | Mutation | Actualizar estado |
+| `removeParcel(id)` | Mutation | Eliminar encomienda |
+
+## Datos de Prueba Incluidos
+
+El backend incluye 3 encomiendas con coordenadas reales:
+1. **TRV-2026-0001**: Caracas → Miami (En Tránsito)
+2. **TRV-2026-0002**: Bogotá → Madrid (Pendiente)  
+3. **TRV-2026-0003**: Lima → Buenos Aires (Entregado)
+
+## ⚠️ Acción Requerida
+
+> [!IMPORTANT]
+> Para ver el mapa interactivo, necesitas agregar tu **Mapbox Access Token** en [frontend/.env](file:///c:/Users/leowf/OneDrive/Escritorio/Travell%20Encomiendas2026/Parcels/frontend/.env):
+> ```
+> VITE_MAPBOX_TOKEN=pk.eyJ1I...tu_token_aqui
+> ```
+> Puedes obtener uno gratis en [mapbox.com](https://www.mapbox.com/)
