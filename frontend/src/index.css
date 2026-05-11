@@ -836,6 +836,120 @@ body {
 
 .detalle-actions { display: flex; flex-direction: column; gap: 8px; }
 
+/* ─── Taquilla & Bodega Tabs ────────────────────────────── */
+.taq-tabs {
+  display: flex; gap: 4px; margin-bottom: 16px;
+  border-bottom: 2px solid var(--border); padding-bottom: 0;
+}
+.taq-tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 18px; font-size: 13px; font-weight: 600;
+  color: var(--text-secondary); background: none; border: none;
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  cursor: pointer; transition: all var(--transition);
+}
+.taq-tab:hover { color: var(--navy); }
+.taq-tab--active { color: var(--navy); border-bottom-color: var(--navy); }
+.taq-tab--active .enc-tab__count { background: var(--navy); color: white; }
+
+.taq-content { display: flex; flex-direction: column; gap: 16px; animation: fadeIn 0.3s ease; }
+
+/* ─── Taquilla Scanner ──────────────────────────────────── */
+.taq-scanner { display: flex; flex-direction: column; gap: 12px; }
+.taq-scanner .enc-search { gap: 8px; }
+.taq-scanner .enc-search .btn { flex-shrink: 0; }
+
+.taq-scan-result {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-radius: var(--radius-sm);
+  animation: fadeIn 0.3s ease;
+}
+.taq-scan-result--success {
+  background: var(--success-light); border: 1px solid rgba(22,163,74,0.2);
+  color: var(--success);
+}
+.taq-scan-result--error {
+  background: var(--danger-light); border: 1px solid rgba(220,38,38,0.2);
+  color: var(--danger);
+}
+.taq-scan-result div {
+  flex: 1; display: flex; flex-direction: column;
+}
+.taq-scan-result strong { font-size: 14px; }
+.taq-scan-result span { font-size: 12px; opacity: 0.8; }
+.taq-scan-result .btn { flex-shrink: 0; }
+
+/* ─── Taquilla Retiro ───────────────────────────────────── */
+.taq-retiro-layout {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.taq-retiro-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: all var(--transition);
+}
+.taq-retiro-item:last-child { border-bottom: none; }
+.taq-retiro-item:hover { background: var(--bg-page); }
+.taq-retiro-item--selected { background: rgba(27,58,107,0.04); border-left: 3px solid var(--navy); }
+.taq-retiro-item__info { display: flex; flex-direction: column; gap: 2px; }
+
+.taq-verificacion { display: flex; flex-direction: column; gap: 16px; }
+.taq-verificacion__datos {
+  background: var(--bg-page); border-radius: var(--radius-sm);
+  padding: 14px; border: 1px solid var(--border);
+}
+.taq-verificacion__datos h4 {
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 10px;
+}
+.taq-verificacion__input { display: flex; flex-direction: column; gap: 6px; }
+
+/* ─── Bodega Dual Layout ────────────────────────────────── */
+.bodega-dual-layout {
+  display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px;
+}
+
+.bodega-bus-select {
+  display: flex; gap: 4px; align-items: center;
+}
+.bodega-bus-select select { min-width: 180px; }
+
+/* ─── Bodega Bus Cards ──────────────────────────────────── */
+.bodega-bus-card {
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+}
+.bodega-bus-card:last-child { border-bottom: none; }
+.bodega-bus-card:hover { background: var(--bg-page); }
+.bodega-bus-card__header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+.bodega-bus-card__header strong {
+  font-size: 14px; color: var(--text-primary);
+}
+.bodega-bus-card__placa {
+  font-size: 12px; color: var(--navy); font-family: monospace;
+  background: rgba(27,58,107,0.06); padding: 1px 6px; border-radius: 4px;
+  margin-left: 8px;
+}
+.bodega-bus-card__details {
+  display: flex; gap: 16px; font-size: 12px; color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.bodega-bus-card__capacity { display: flex; flex-direction: column; gap: 4px; }
+.bodega-bus-card__bar {
+  height: 6px; background: var(--bg-page); border-radius: 3px;
+  overflow: hidden;
+}
+.bodega-bus-card__bar-fill {
+  height: 100%; background: var(--navy); border-radius: 3px;
+  transition: width 0.5s ease;
+}
+.bodega-bus-card__cap-text {
+  font-size: 11px; color: var(--text-muted); font-weight: 600;
+}
+
 /* ─── Responsive ────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
@@ -852,4 +966,7 @@ body {
   .enc-header { flex-direction: column; gap: 12px; align-items: flex-start; }
   .dev-nav-grid { grid-template-columns: 1fr; }
   .enc-tabs { flex-wrap: nowrap; }
+  .taq-retiro-layout { grid-template-columns: 1fr; }
+  .bodega-dual-layout { grid-template-columns: 1fr; }
+  .taq-tabs { overflow-x: auto; }
 }
