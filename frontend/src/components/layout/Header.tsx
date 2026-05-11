@@ -23,7 +23,8 @@ export default function Header() {
   const user = useAuthStore((s) => s.user);
   const location = useLocation();
 
-  const pageTitle = PAGE_TITLES[location.pathname] || 'Travell Encomiendas';
+  const pageTitle = PAGE_TITLES[location.pathname]
+    || (location.pathname.startsWith('/encomiendas/') ? 'Detalle de Encomienda' : 'Travell Encomiendas');
 
   return (
     <header className="topbar">

@@ -13,6 +13,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import RastreoPublicoPage from './pages/RastreoPublicoPage';
 import CrearEnvioPage from './pages/CrearEnvioPage';
+import DevNavPage from './pages/DevNavPage';
 import NotFoundPage from './pages/NotFoundPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 
@@ -25,6 +26,7 @@ import SeguimientoPage from './pages/SeguimientoPage';
 import UsuariosPage from './pages/UsuariosPage';
 import ReportesPage from './pages/ReportesPage';
 import MisEnviosPage from './pages/MisEnviosPage';
+import DetalleEncomiendaPage from './pages/DetalleEncomiendaPage';
 
 function AppRoutes() {
   const user = useAuthStore((s) => s.user);
@@ -47,6 +49,7 @@ function AppRoutes() {
       <Route path="/registro" element={<RegisterPage />} />
       <Route path="/rastreo" element={<RastreoPublicoPage />} />
       <Route path="/enviar" element={<CrearEnvioPage />} />
+      <Route path="/dev" element={<DevNavPage />} />
       <Route path="/no-autorizado" element={<UnauthorizedPage />} />
 
       {/* ── Protected routes (auth required) ─────── */}
@@ -74,6 +77,7 @@ function AppRoutes() {
           {/* Shared internal routes (all authenticated roles) */}
           <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR, Rol.TAQUILLA, Rol.BODEGA, Rol.CLIENTE]} />}>
             <Route path="/encomiendas" element={<EncomiendasPage />} />
+            <Route path="/encomiendas/:id" element={<DetalleEncomiendaPage />} />
             <Route path="/seguimiento" element={<SeguimientoPage />} />
           </Route>
 
