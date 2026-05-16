@@ -14,46 +14,82 @@ enum Rol {
 }
 
 enum ParcelStatus {
-  PENDING
-  IN_TRANSIT
-  DELIVERED
-  CANCELLED
+  REGISTRADO
+  RECEPCIONADO
+  EN_TRANSITO
+  EN_DESTINO
+  DISPONIBLE
+  ENTREGADO
+  CANCELADO
 }
 
 model Usuario {
-  id            String   @id @default(uuid()) @db.Uuid
+  id            String         @id @default(uuid()) @db.Uuid
   nombre        String
-  email         String   @unique
+  email         String         @unique
   passwordHash  String
-  rol           Rol      @default(CLIENTE)
-  activo        Boolean  @default(true)
-  creadoEn      DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
+  rol           Rol            @default(CLIENTE)
+  activo        Boolean        @default(true)
+  creadoEn      DateTime       @default(now())
+  actualizadoEn DateTime       @updatedAt
+  eventos       ParcelEvent[]
 
   @@map("usuarios")
 }
 
 model Parcel {
-  id               String        @id @default(uuid()) @db.Uuid
-  trackingNumber  String        @unique
+  id                 String        @id @default(uuid()) @db.Uuid
+  trackingNumber     String        @unique
 
-  senderName       String
-  recipientName    String
+  // Sender info
+  senderName         String
+  senderCi           String
+  senderPhone        String
+  senderEmail        String
 
-  originAddress    String
+  // Recipient info
+  recipientName      String
+  recipientCi        String
+  recipientPhone     String
+  recipientEmail     String?
+
+  // Package info
+  content            String
+  weight             Float
+  observations       String?
+
+  // Route info
+  routeCode          String
+  originAddress      String
   destinationAddress String
+  originLat          Float
+  originLng          Float
+  destinationLat     Float
+  destinationLng     Float
 
-  originLng        Float
-  originLat        Float
-  destinationLng   Float
-  destinationLat   Float
+  // Status
+  status             ParcelStatus  @default(REGISTRADO)
 
-  weight           Float
+  // Timestamps
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  deliveredAt        DateTime?
 
-  status           ParcelStatus @default(PENDING)
-
-  createdAt        DateTime     @default(now())
-  deliveredAt      DateTime?
+  // Relations
+  events             ParcelEvent[]
 
   @@map("parcels")
 }
+
+model ParcelEvent {
+  id          String       @id @default(uuid()) @db.Uuid
+  parcelId    String       @db.Uuid
+  parcel      Parcel       @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  status      ParcelStatus
+  note        String?
+  usuarioId   String?      @db.Uuid
+  usuario     Usuario?     @relation(fields: [usuarioId], references: [id])
+  createdAt   DateTime     @default(now())
+
+  @@map("parcel_events")
+}

@@ -1,36 +1,44 @@
 import { InputType, Field, Float } from '@nestjs/graphql';
 
-@InputType()
+@InputType({ description: 'Datos para crear una encomienda' })
 export class CreateParcelInput {
-  @Field({ description: 'Sender name' })
+  // Sender
+  @Field({ description: 'Nombre completo del remitente' })
   senderName!: string;
 
-  @Field({ description: 'Recipient name' })
+  @Field({ description: 'CI del remitente' })
+  senderCi!: string;
+
+  @Field({ description: 'Teléfono del remitente' })
+  senderPhone!: string;
+
+  @Field({ description: 'Email del remitente' })
+  senderEmail!: string;
+
+  // Recipient
+  @Field({ description: 'Nombre completo del destinatario' })
   recipientName!: string;
 
-  // Code of the route used in the frontend (e.g. "SCZ-PQA").
-  // If provided, backend can infer origin/destination addresses + coordinates.
-  @Field({ nullable: true, description: 'Route code (SCZ-PQA, ...)' })
-  routeCode?: string;
+  @Field({ description: 'CI del destinatario (para verificar entrega)' })
+  recipientCi!: string;
 
-  @Field({ nullable: true, description: 'Origin address' })
-  originAddress?: string;
+  @Field({ description: 'Teléfono del destinatario' })
+  recipientPhone!: string;
 
-  @Field({ nullable: true, description: 'Destination address' })
-  destinationAddress?: string;
+  @Field({ nullable: true, description: 'Email del destinatario (opcional)' })
+  recipientEmail?: string;
 
-  @Field(() => Float, { nullable: true, description: 'Origin longitude' })
-  originLng?: number;
+  // Package
+  @Field({ description: 'Descripción / contenido del paquete' })
+  content!: string;
 
-  @Field(() => Float, { nullable: true, description: 'Origin latitude' })
-  originLat?: number;
-
-  @Field(() => Float, { nullable: true, description: 'Destination longitude' })
-  destinationLng?: number;
-
-  @Field(() => Float, { nullable: true, description: 'Destination latitude' })
-  destinationLat?: number;
-
-  @Field(() => Float, { description: 'Weight in kg' })
+  @Field(() => Float, { description: 'Peso declarado en kg' })
   weight!: number;
+
+  @Field({ nullable: true, description: 'Observaciones o instrucciones especiales' })
+  observations?: string;
+
+  // Route — si se envía routeCode el backend infiere origen/destino
+  @Field({ description: 'Código de ruta (ej. SCZ-PQA, PQA-SCZ, SCZ-SJC, SCZ-ROB)' })
+  routeCode!: string;
 }
