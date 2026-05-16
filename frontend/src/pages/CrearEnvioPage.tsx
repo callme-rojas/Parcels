@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useAuthStore } from '../stores/authStore';
-import { Package, FileBarChart, Download, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
+import { Package, FileBarChart, Download, ArrowLeft, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCreateParcel } from '../hooks/useParcel';
+import type { Parcel } from '../types';
 
 // Steps in the flow
 type Step = 'remitente' | 'destinatario' | 'paquete' | 'confirmacion';
@@ -9,6 +11,7 @@ type Step = 'remitente' | 'destinatario' | 'paquete' | 'confirmacion';
 export default function CrearEnvioPage() {
   const user = useAuthStore((s) => s.user);
   const isGuest = !user;
+  const { createParcel } = useCreateParcel();
 
   // If logged in, pre-fill remitente data
   const [step, setStep] = useState<Step>(isGuest ? 'remitente' : 'destinatario');
@@ -34,7 +37,8 @@ export default function CrearEnvioPage() {
 
   // Result
   const [loading, setLoading] = useState(false);
-  const [codigoGenerado, setCodigoGenerado] = useState('');
+  const [serverError, setServerError] = useState('');
+  const [parcelCreado, setParcelCreado] = useState<Parcel | null>(null);
 
   const RUTAS = [
     { value: 'SCZ-PQA', label: 'Santa Cruz → Puerto Quijarro' },
@@ -61,14 +65,30 @@ export default function CrearEnvioPage() {
 
   const handleSubmit = async () => {
     setLoading(true);
-    // TODO: Replace with real GraphQL mutation
-    await new Promise((r) => setTimeout(r, 1500));
-    const year = new Date().getFullYear();
-    const randomNum = Math.floor(Math.random() * 900000 + 100000);
-    const rutaCode = ruta.split('-')[0];
-    setCodigoGenerado(`EX-${year}-${rutaCode}-00${randomNum}`);
-    setLoading(false);
-    setStep('confirmacion');
+    setServerError('');
+    try {
+      const result = await createParcel({
+        senderName: remNombre,
+        senderCi: remCi,
+        senderPhone: remTelefono,
+        senderEmail: remEmail,
+        recipientName: destNombre,
+        recipientCi: destCi,
+        recipientPhone: destTelefono,
+        recipientEmail: destEmail || undefined,
+        content: contenido,
+        weight: parseFloat(pesoDeclarado),
+        observations: observaciones || undefined,
+        routeCode: ruta,
+      });
+      setParcelCreado(result);
+      setStep('confirmacion');
+    } catch (err: any) {
+      const msg = err?.graphQLErrors?.[0]?.message || err?.message || 'Error al crear la encomienda';
+      setServerError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const allSteps: { key: Step; label: string }[] = isGuest
@@ -236,6 +256,12 @@ export default function CrearEnvioPage() {
                     value={observaciones} onChange={(e) => setObservaciones(e.target.value)} />
                 </div>
               </div>
+              {serverError && (
+                <div className="taq-scan-result taq-scan-result--error" style={{ marginTop: 8 }}>
+                  <AlertCircle size={18} />
+                  <div><strong>Error al generar etiqueta</strong><span>{serverError}</span></div>
+                </div>
+              )}
               <div className="envio-card__actions">
                 <button className="btn btn--secondary" onClick={goBack}>
                   <ArrowLeft size={16} /> Atrás
@@ -249,7 +275,7 @@ export default function CrearEnvioPage() {
           )}
 
           {/* ── Step: Confirmación + Etiqueta ───── */}
-          {step === 'confirmacion' && codigoGenerado && (
+          {step === 'confirmacion' && parcelCreado && (
             <div className="envio-success">
               <CheckCircle2 size={48} style={{ color: '#16A34A' }} />
               <h2 className="envio-card__title">¡Envío registrado con éxito!</h2>
@@ -257,14 +283,12 @@ export default function CrearEnvioPage() {
                 Tu etiqueta ha sido generada. Imprímela y pégala en el paquete antes de llevarlo a la oficina.
               </p>
 
-              {/* Fake label preview */}
               <div className="envio-label">
                 <div className="envio-label__header">
                   <Package size={20} /> <strong>Travell Encomiendas</strong>
                 </div>
-                <div className="envio-label__code">{codigoGenerado}</div>
+                <div className="envio-label__code">{parcelCreado.trackingNumber}</div>
                 <div className="envio-label__barcode">
-                  {/* Simulated barcode bars */}
                   <div className="envio-label__bars">
                     {Array.from({ length: 40 }).map((_, i) => (
                       <div key={i} className="envio-label__bar" style={{ height: 30 + Math.random() * 20, width: Math.random() > 0.5 ? 2 : 3 }} />
@@ -272,17 +296,22 @@ export default function CrearEnvioPage() {
                   </div>
                 </div>
                 <div className="envio-label__grid">
-                  <div><span>Remitente</span><strong>{remNombre || user?.nombre}</strong></div>
-                  <div><span>Destinatario</span><strong>{destNombre}</strong></div>
-                  <div><span>Ruta</span><strong>{RUTAS.find((r) => r.value === ruta)?.label}</strong></div>
-                  <div><span>Peso</span><strong>{pesoDeclarado} kg</strong></div>
-                  <div><span>Contenido</span><strong>{contenido}</strong></div>
+                  <div><span>Código</span><strong style={{ fontFamily: 'monospace', fontSize: 12 }}>{parcelCreado.trackingNumber}</strong></div>
+                  <div><span>Remitente</span><strong>{parcelCreado.senderName}</strong></div>
+                  <div><span>Destinatario</span><strong>{parcelCreado.recipientName}</strong></div>
+                  <div><span>Ruta</span><strong>{parcelCreado.originAddress.split(',')[0]} → {parcelCreado.destinationAddress.split(',')[0]}</strong></div>
+                  <div><span>Peso</span><strong>{parcelCreado.weight} kg</strong></div>
+                  <div><span>Contenido</span><strong>{parcelCreado.content}</strong></div>
                 </div>
               </div>
 
               <div className="envio-card__actions" style={{ justifyContent: 'center', gap: 12 }}>
-                <button className="btn btn--primary"><Download size={16} /> Descargar PDF</button>
-                <Link to="/rastreo" className="btn btn--secondary">Rastrear este envío</Link>
+                <button className="btn btn--primary" onClick={() => window.print()}>
+                  <Download size={16} /> Imprimir etiqueta
+                </button>
+                <Link to={`/rastreo?code=${parcelCreado.trackingNumber}`} className="btn btn--secondary">
+                  Rastrear este envío
+                </Link>
               </div>
 
               {isGuest && (

@@ -3,65 +3,67 @@ import { useNavigate } from 'react-router-dom';
 import {
   Package, Search, ScanLine, UserCheck, ClipboardCheck,
   ArrowRight, CheckCircle2, XCircle, AlertTriangle, ChevronRight,
-  Hash, User, Phone, CreditCard, Eye
+  Hash, User, Phone, CreditCard, Eye, Loader2
 } from 'lucide-react';
+import { useParcels, useUpdateParcelStatus, useConfirmarRetiro } from '../hooks/useParcel';
+import { EstadoEncomienda } from '../types';
+import type { Parcel } from '../types';
 
-// ─── Mock Data ─────────────────────────────────────────
+// ─── Tipos ──────────────────────────────────────────────────
 type TabKey = 'recepcion' | 'retiro' | 'cola';
-
-interface EncomPendiente {
-  id: string;
-  codigo: string;
-  remitente: string;
-  destinatario: string;
-  ruta: string;
-  peso: number;
-  contenido: string;
-  hora: string;
-}
-
-const MOCK_PENDIENTES: EncomPendiente[] = [
-  { id: '1', codigo: 'EX-2026-SCZ-0048229', remitente: 'Laura Peña', destinatario: 'Andrés Paniagua', ruta: 'SCZ → PQA', peso: 2.3, contenido: 'Libros y papelería', hora: '16:30' },
-  { id: '2', codigo: 'EX-2026-SCZ-0048230', remitente: 'Gabriel Torrez', destinatario: 'Daniela Vega', ruta: 'SCZ → ROB', peso: 6.1, contenido: 'Repuestos industriales', hora: '16:15' },
-  { id: '3', codigo: 'EX-2026-PQA-0012344', remitente: 'Alejandro Rivas', destinatario: 'Pamela Durán', ruta: 'PQA → SCZ', peso: 9.3, contenido: 'Materiales de construcción', hora: '15:50' },
-  { id: '4', codigo: 'EX-2026-SCZ-0048231', remitente: 'Cecilia Flores', destinatario: 'Martín Peredo', ruta: 'SCZ → SJC', peso: 3.0, contenido: 'Regalos personales', hora: '15:30' },
-];
-
-const MOCK_RETIRO: Array<{ id: string; codigo: string; destinatario: string; ci: string; ruta: string; estado: string; oficina: string }> = [
-  { id: '5', codigo: 'EX-2026-PQA-0012340', destinatario: 'Luisa Fernández', ci: '7 345 678 SC', ruta: 'PQA → SCZ', estado: 'DISPONIBLE', oficina: 'Terminal Bimodal SCZ' },
-  { id: '6', codigo: 'EX-2026-SCZ-0048226', destinatario: 'Martín Peredo', ci: '6 123 456 SC', ruta: 'SCZ → SJC', estado: 'DISPONIBLE', oficina: 'Terminal San José' },
-];
 
 export default function TaquillaPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabKey>('recepcion');
   const [searchCode, setSearchCode] = useState('');
   const [scannedCode, setScannedCode] = useState('');
+  const [scannedParcel, setScannedParcel] = useState<Parcel | null>(null);
   const [scanResult, setScanResult] = useState<'success' | 'error' | null>(null);
   const [retiroCI, setRetiroCI] = useState('');
-  const [retiroResult, setRetiroResult] = useState<'success' | 'error' | null>(null);
+  const [retiroResult, setRetiroResult] = useState<'success' | 'error' | 'ci_error' | null>(null);
   const [selectedRetiro, setSelectedRetiro] = useState<string | null>(null);
+  const [actionMsg, setActionMsg] = useState('');
 
-  // Simular escaneo
+  // Real data from backend
+  const { parcels: pendientes, loading: loadingPendientes, refetch: refetchPendientes } =
+    useParcels({ status: EstadoEncomienda.REGISTRADO });
+  const { parcels: disponibles, loading: loadingDisponibles, refetch: refetchDisponibles } =
+    useParcels({ status: EstadoEncomienda.DISPONIBLE });
+
+  const { updateStatus, loading: updatingStatus } = useUpdateParcelStatus();
+  const { confirmarRetiro, loading: confirmando } = useConfirmarRetiro();
+
+  // Find scanned parcel in the REGISTRADO list
   const handleScan = () => {
     if (!scannedCode.trim()) return;
-    // Simular que encontró la encomienda
-    const found = MOCK_PENDIENTES.find(e => e.codigo.toLowerCase().includes(scannedCode.toLowerCase()));
-    setScanResult(found ? 'success' : 'error');
+    const found = pendientes.find(p =>
+      p.trackingNumber.toLowerCase().includes(scannedCode.toLowerCase())
+    );
+    if (found) { setScannedParcel(found); setScanResult('success'); }
+    else { setScannedParcel(null); setScanResult('error'); }
   };
 
-  const handleRecepcionar = (codigo: string) => {
-    // Mock: show success feedback
-    alert(`✅ Encomienda ${codigo} recepcionada exitosamente.\nEstado actualizado: RECEPCIONADO`);
+  const handleRecepcionar = async (parcelId: string, codigo: string) => {
+    try {
+      await updateStatus({ id: parcelId, status: EstadoEncomienda.RECEPCIONADO, note: 'Recepcionado en taquilla' });
+      setActionMsg(`✅ ${codigo} recepcionada. Estado: RECEPCIONADO`);
+      refetchPendientes();
+      if (scannedParcel?.id === parcelId) { setScanResult(null); setScannedParcel(null); setScannedCode(''); }
+    } catch (e: any) {
+      setActionMsg(`❌ Error: ${e?.message}`);
+    }
   };
 
-  const handleConfirmRetiro = () => {
+  const handleConfirmRetiro = async () => {
     if (!retiroCI.trim() || !selectedRetiro) return;
-    const enc = MOCK_RETIRO.find(e => e.id === selectedRetiro);
-    if (enc && retiroCI.replace(/\s/g, '').includes(enc.ci.replace(/\s/g, '').slice(0, 5))) {
+    setRetiroResult(null);
+    try {
+      await confirmarRetiro({ parcelId: selectedRetiro, recipientCi: retiroCI });
       setRetiroResult('success');
-    } else {
-      setRetiroResult('error');
+      refetchDisponibles();
+    } catch (e: any) {
+      const msg: string = e?.graphQLErrors?.[0]?.message || e?.message || '';
+      setRetiroResult(msg.includes('CI') ? 'ci_error' : 'error');
     }
   };
 
@@ -71,12 +73,12 @@ export default function TaquillaPage() {
       <section className="dashboard__kpis">
         <div className="kpi-card kpi-card--amber">
           <div className="kpi-card__header"><span className="kpi-card__icon"><Package size={22} /></span></div>
-          <div className="kpi-card__value">{MOCK_PENDIENTES.length}</div>
+          <div className="kpi-card__value">{loadingPendientes ? <Loader2 size={18} className="spin" /> : pendientes.length}</div>
           <div className="kpi-card__label">Pendientes recepción</div>
         </div>
         <div className="kpi-card kpi-card--emerald">
           <div className="kpi-card__header"><span className="kpi-card__icon"><UserCheck size={22} /></span></div>
-          <div className="kpi-card__value">{MOCK_RETIRO.length}</div>
+          <div className="kpi-card__value">{loadingDisponibles ? <Loader2 size={18} className="spin" /> : disponibles.length}</div>
           <div className="kpi-card__label">Disponibles para retiro</div>
         </div>
         <div className="kpi-card kpi-card--blue">

@@ -2,8 +2,10 @@ import { useState } from 'react';
 import {
   Warehouse, Truck, PackageCheck, PackageX, Package,
   ArrowRight, CheckCircle2, ChevronDown, Eye,
-  ArrowUpDown, AlertCircle
+  ArrowUpDown, AlertCircle, Loader2
 } from 'lucide-react';
+import { useParcels, useUpdateParcelStatus } from '../hooks/useParcel';
+import { EstadoEncomienda } from '../types';
 
 // ─── Mock Data ─────────────────────────────────────────
 type BodegaTab = 'clasificar' | 'carga' | 'descarga';
@@ -72,22 +74,42 @@ export default function BodegaPage() {
   const [activeTab, setActiveTab] = useState<BodegaTab>('clasificar');
   const [selectedBus, setSelectedBus] = useState<string | null>(null);
   const [asignando, setAsignando] = useState<string | null>(null);
+  const [actionMsg, setActionMsg] = useState('');
 
-  const handleClasificar = (codigo: string) => {
-    alert(`✅ Encomienda ${codigo} clasificada.\nLista para asignación a bus.`);
+  // Real data from backend
+  const { parcels: porClasificar, loading: loadingClas, refetch: refetchClas } =
+    useParcels({ status: EstadoEncomienda.RECEPCIONADO });
+  const { parcels: enTransito, loading: loadingTransito, refetch: refetchTransito } =
+    useParcels({ status: EstadoEncomienda.EN_TRANSITO });
+  const { parcels: enDestino, loading: loadingDestino, refetch: refetchDestino } =
+    useParcels({ status: EstadoEncomienda.EN_DESTINO });
+
+  const { updateStatus } = useUpdateParcelStatus();
+
+  const handleCarga = async (parcelId: string, codigo: string) => {
+    try {
+      await updateStatus({ id: parcelId, status: EstadoEncomienda.EN_TRANSITO, note: 'Cargado en bus' });
+      setActionMsg(`✅ ${codigo} → EN_TRANSITO`);
+      refetchClas();
+      refetchTransito();
+    } catch (e: any) { setActionMsg(`❌ ${e?.message}`); }
   };
 
-  const handleAsignarBus = (encId: string, busId: string) => {
-    alert(`✅ Encomienda asignada a ${MOCK_BUSES.find(b => b.id === busId)?.flota} (${MOCK_BUSES.find(b => b.id === busId)?.placa})`);
-    setAsignando(null);
+  const handleDescarga = async (parcelId: string, codigo: string) => {
+    try {
+      await updateStatus({ id: parcelId, status: EstadoEncomienda.EN_DESTINO, note: 'Descargado en destino' });
+      setActionMsg(`✅ ${codigo} → EN_DESTINO`);
+      refetchTransito();
+      refetchDestino();
+    } catch (e: any) { setActionMsg(`❌ ${e?.message}`); }
   };
 
-  const handleCarga = (codigo: string) => {
-    alert(`✅ Encomienda ${codigo} registrada como cargada.\nEstado actualizado: EN_TRANSITO`);
-  };
-
-  const handleDescarga = (codigo: string) => {
-    alert(`✅ Encomienda ${codigo} descargada.\nEstado actualizado: EN_DESTINO`);
+  const handleDisponible = async (parcelId: string, codigo: string) => {
+    try {
+      await updateStatus({ id: parcelId, status: EstadoEncomienda.DISPONIBLE, note: 'Disponible para retiro en ventanilla' });
+      setActionMsg(`✅ ${codigo} → DISPONIBLE`);
+      refetchDestino();
+    } catch (e: any) { setActionMsg(`❌ ${e?.message}`); }
   };
 
   return (
