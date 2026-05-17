@@ -17,6 +17,9 @@ Parcels/
 ```bash
 cd backend
 npm install
+npx prisma db pull
+npx prisma generate
+
 npm run start:dev
 ```
 

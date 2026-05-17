@@ -2,9 +2,69 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input AsignarBusInput {
+  """Identificador de flota (ej. Flota 18)"""
+  busFlota: String
+
+  """Placa del bus (ej. 2845-KCN)"""
+  busPlaca: String!
+
+  """Nota adicional"""
+  note: String
+
+  """ID de la encomienda"""
+  parcelId: String!
+}
+
+input AsignarEncomiendaBusInput {
+  """ID del bus en la flota"""
+  busId: String!
+  note: String
+
+  """ID de la encomienda"""
+  parcelId: String!
+}
+
 type AuthPayload {
   accessToken: String!
   user: User!
+}
+
+"""Bus de la flota Travell"""
+type Bus {
+  activo: Boolean!
+  capacidad: Int!
+
+  """Encomiendas asignadas o en tránsito en este bus"""
+  cargados: Int!
+  conductor: String
+  createdAt: DateTime!
+  estado: BusEstado!
+  flota: String!
+  id: ID!
+  modelo: String
+  placa: String!
+  routeCode: String!
+  routeLabel: String!
+  salidaProgramada: String
+  updatedAt: DateTime!
+}
+
+"""Estado operativo del bus"""
+enum BusEstado {
+  CARGANDO
+  EN_RUTA
+  INACTIVO
+  LISTO
+}
+
+"""Última ubicación GPS de un bus"""
+type BusLocation {
+  busId: String!
+  lat: Float!
+  lng: Float!
+  recordedAt: DateTime!
+  velocidad: Float
 }
 
 """Datos para confirmar retiro de encomienda"""
@@ -16,11 +76,26 @@ input ConfirmarRetiroInput {
   recipientCi: String!
 }
 
+input CrearBusInput {
+  capacidad: Int
+  conductor: String
+  estado: BusEstado
+  flota: String!
+  modelo: String
+  placa: String!
+  routeCode: String!
+
+  """Etiqueta legible; si no se envía se deriva del routeCode"""
+  routeLabel: String
+  salidaProgramada: String
+}
+
 input CrearUsuarioInput {
   email: String!
   nombre: String!
   password: String!
   rol: Rol!
+  telefono: String
 }
 
 """Datos para crear una encomienda"""
@@ -67,23 +142,90 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+"""Resumen breve de encomienda para listados admin"""
+type EncomiendaResumen {
+  createdAt: DateTime!
+  id: String!
+  recipientName: String!
+  routeCode: String!
+  routeLabel: String!
+  senderName: String!
+  status: ParcelStatus!
+  trackingNumber: String!
+}
+
+"""Rango de fechas para indicadores operativos"""
+input IndicadoresFilterInput {
+  """Fecha desde (inclusive). Por defecto: hace 30 días"""
+  fechaDesde: DateTime
+
+  """Fecha hasta (inclusive). Por defecto: hoy"""
+  fechaHasta: DateTime
+}
+
+"""Indicadores operativos del período"""
+type IndicadoresOperativos {
+  """Top rutas por volumen en el período"""
+  encomiendasPorRuta: [RutaConteo!]!
+  fechaDesde: DateTime!
+  fechaHasta: DateTime!
+
+  """Entregadas / registradas × 100"""
+  tasaEntregaExitosa: Float!
+  totalCanceladas: Int!
+  totalDisponibles: Int!
+  totalEnDestino: Int!
+  totalEnTransito: Int!
+  totalEntregadas: Int!
+  totalRecepcionadas: Int!
+
+  """Encomiendas creadas en el período"""
+  totalRegistradas: Int!
+}
+
 input LoginInput {
   email: String!
   password: String!
 }
 
 type Mutation {
+  """Asignar por placa/flota (legacy; usa bus en BD si la placa existe)"""
+  asignarBus(input: AsignarBusInput!): Parcel!
+
+  """
+  Asignar encomienda a bus por ID (RECEPCIONADO, valida ruta y capacidad)
+  """
+  asignarEncomiendaABus(input: AsignarEncomiendaBusInput!): Parcel!
+
+  """Clasificar encomienda en bodega (RECEPCIONADO)"""
+  clasificarEncomienda(input: ParcelActionInput!): Parcel!
+
   """Confirmar retiro de encomienda con verificación de CI (TAQUILLA)"""
   confirmarRetiro(input: ConfirmarRetiroInput!): Parcel!
+
+  """Registrar un bus en la flota"""
+  crearBus(input: CrearBusInput!): Bus!
   crearUsuario(input: CrearUsuarioInput!): User!
 
-  """Crear encomienda (pública o autenticada)"""
+  """Crear encomienda (pública, sin auth)"""
   createParcel(input: CreateParcelInput!): Parcel!
 
   """Crear encomienda (autenticado — registra usuario creador)"""
   createParcelAuth(input: CreateParcelInput!): Parcel!
   login(input: LoginInput!): AuthPayload!
+
+  """Marcar disponible para retiro → DISPONIBLE"""
+  marcarDisponible(input: ParcelActionInput!): Parcel!
   registerCliente(input: RegisterClienteInput!): AuthPayload!
+
+  """Registrar carga en bus → EN_TRANSITO"""
+  registrarCarga(input: ParcelActionInput!): Parcel!
+
+  """Registrar coordenada GPS del bus (simulación de rastreo)"""
+  registrarCoordenadaBus(input: RegistrarCoordenadaBusInput!): BusLocation!
+
+  """Registrar descarga en destino → EN_DESTINO"""
+  registrarDescarga(input: ParcelActionInput!): Parcel!
 
   """Eliminar encomienda (solo ADMINISTRADOR)"""
   removeParcel(id: ID!): Boolean!
@@ -94,6 +236,15 @@ type Mutation {
 
 """Encomienda / paquete en tránsito"""
 type Parcel {
+  """Flota del bus asignado (bodega)"""
+  assignedBusFlota: String
+
+  """ID del bus asignado en flota"""
+  assignedBusId: String
+
+  """Placa del bus asignado (bodega)"""
+  assignedBusPlaca: String
+
   """Descripción / contenido del paquete"""
   content: String!
   createdAt: DateTime!
@@ -150,6 +301,14 @@ type Parcel {
   weight: Float!
 }
 
+input ParcelActionInput {
+  """Nota u observación del evento"""
+  note: String
+
+  """ID de la encomienda"""
+  parcelId: String!
+}
+
 """Evento de estado de una encomienda"""
 type ParcelEvent {
   createdAt: DateTime!
@@ -185,8 +344,16 @@ input ParcelsFilterInput {
 }
 
 type Query {
-  """Crear encomienda sin autenticación (flujo público)"""
-  createParcelPublic(input: CreateParcelInput!): Parcel!
+  bus(id: ID!): Bus!
+
+  """Listar buses de la flota (filtro opcional por ruta)"""
+  buses(routeCode: String, soloActivos: Boolean = true): [Bus!]!
+
+  """Buses activos en estado cargando/listo para asignar encomiendas"""
+  busesDisponibles(routeCode: String): [Bus!]!
+
+  """KPIs agregados por período (default últimos 30 días)"""
+  indicadoresOperativos(filter: IndicadoresFilterInput): IndicadoresOperativos!
   me: User!
 
   """Obtener encomienda por ID (requiere auth)"""
@@ -197,12 +364,83 @@ type Query {
 
   """Listar encomiendas con filtros (requiere auth)"""
   parcels(filter: ParcelsFilterInput): [Parcel!]!
+
+  """
+  Listado paginado de encomiendas con filtros (ruta, estado, fechas, búsqueda)
+  """
+  reporteEncomiendas(filter: ReporteEncomiendasFilterInput): ReporteEncomiendasResult!
+
+  """KPIs del día y últimas encomiendas (panel admin)"""
+  resumenDashboard: ResumenDashboard!
+
+  """Última ubicación del bus asignado a la encomienda (pública)"""
+  ubicacionBusPorEncomienda(parcelId: ID!): BusLocation
+
+  """Última coordenada GPS registrada del bus"""
+  ultimaUbicacionBus(busId: ID!): BusLocation
 }
 
 input RegisterClienteInput {
   email: String!
   nombre: String!
   password: String!
+  telefono: String
+}
+
+input RegistrarCoordenadaBusInput {
+  busId: String!
+  lat: Float!
+  lng: Float!
+  velocidad: Float
+}
+
+"""Filtros para reporte de encomiendas (admin)"""
+input ReporteEncomiendasFilterInput {
+  """Fecha desde (inclusive, ISO)"""
+  fechaDesde: DateTime
+
+  """Fecha hasta (inclusive, fin del día)"""
+  fechaHasta: DateTime
+  page: Int = 1
+  pageSize: Int = 20
+
+  """Código de ruta (ej. SCZ-PQA)"""
+  routeCode: String
+
+  """Buscar por código, nombre o CI"""
+  search: String
+  status: ParcelStatus
+}
+
+"""Resultado paginado del reporte de encomiendas"""
+type ReporteEncomiendasResult {
+  items: [Parcel!]!
+  page: Int!
+  pageSize: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+"""KPIs y datos rápidos del dashboard admin"""
+type ResumenDashboard {
+  """Estado actual DISPONIBLE"""
+  disponiblesRetiro: Int!
+
+  """Estado actual EN_TRANSITO"""
+  enTransito: Int!
+
+  """Entregadas hoy (deliveredAt)"""
+  entregadasHoy: Int!
+  fechaReferencia: DateTime!
+
+  """Encomiendas creadas hoy"""
+  registradasHoy: Int!
+
+  """Top 5 rutas (últimos 7 días)"""
+  topRutas: [RutaConteo!]!
+
+  """Últimas 5 registradas"""
+  ultimasEncomiendas: [EncomiendaResumen!]!
 }
 
 enum Rol {
@@ -210,6 +448,15 @@ enum Rol {
   BODEGA
   CLIENTE
   TAQUILLA
+}
+
+"""Conteo de encomiendas por ruta"""
+type RutaConteo {
+  """Porcentaje sobre el total del período (0-100)"""
+  porcentaje: Float!
+  routeCode: String!
+  routeLabel: String!
+  total: Int!
 }
 
 """Actualizar estado de una encomienda"""
@@ -230,4 +477,5 @@ type User {
   id: ID!
   nombre: String!
   rol: Rol!
+  telefono: String
 }

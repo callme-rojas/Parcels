@@ -107,3 +107,18 @@ export const CONFIRMAR_RETIRO_MUTATION = gql`
     }
   }
 `;
+
+// ─── Bus Mutations ──────────────────────────────────────────
+
+export const CREATE_BUS_MUTATION = gql`
+  mutation CrearBus($input: CrearBusInput!) {
+    crearBus(input: $input) {
+      id
+      placa
+      flota
+      routeCode
+      capacidad
+      estado
+    }
+  }
+`;

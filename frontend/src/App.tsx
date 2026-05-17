@@ -27,6 +27,7 @@ import UsuariosPage from './pages/UsuariosPage';
 import ReportesPage from './pages/ReportesPage';
 import MisEnviosPage from './pages/MisEnviosPage';
 import DetalleEncomiendaPage from './pages/DetalleEncomiendaPage';
+import BusesPage from './pages/BusesPage';
 
 function AppRoutes() {
   const user = useAuthStore((s) => s.user);
@@ -79,6 +80,11 @@ function AppRoutes() {
             <Route path="/encomiendas" element={<EncomiendasPage />} />
             <Route path="/encomiendas/:id" element={<DetalleEncomiendaPage />} />
             <Route path="/seguimiento" element={<SeguimientoPage />} />
+          </Route>
+
+          {/* Admin, Bodega, and Taquilla routes (Operations) */}
+          <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR, Rol.BODEGA, Rol.TAQUILLA]} />}>
+            <Route path="/buses" element={<BusesPage />} />
           </Route>
 
           {/* CLIENTE routes */}

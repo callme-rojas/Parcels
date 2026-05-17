@@ -1,27 +1,32 @@
 // ─── Roles del sistema ────────────────────────────────────────
-export enum Rol {
-  ADMINISTRADOR = 'ADMINISTRADOR',
-  TAQUILLA = 'TAQUILLA',
-  BODEGA = 'BODEGA',
-  CLIENTE = 'CLIENTE',
-}
+export const Rol = {
+  ADMINISTRADOR: 'ADMINISTRADOR',
+  TAQUILLA: 'TAQUILLA',
+  BODEGA: 'BODEGA',
+  CLIENTE: 'CLIENTE',
+} as const;
+
+export type Rol = typeof Rol[keyof typeof Rol];
 
 // ─── Estados de encomienda (alineados con backend) ────────────
-export enum EstadoEncomienda {
-  REGISTRADO = 'REGISTRADO',
-  RECEPCIONADO = 'RECEPCIONADO',
-  EN_TRANSITO = 'EN_TRANSITO',
-  EN_DESTINO = 'EN_DESTINO',
-  DISPONIBLE = 'DISPONIBLE',
-  ENTREGADO = 'ENTREGADO',
-  CANCELADO = 'CANCELADO',
-}
+export const EstadoEncomienda = {
+  REGISTRADO: 'REGISTRADO',
+  RECEPCIONADO: 'RECEPCIONADO',
+  EN_TRANSITO: 'EN_TRANSITO',
+  EN_DESTINO: 'EN_DESTINO',
+  DISPONIBLE: 'DISPONIBLE',
+  ENTREGADO: 'ENTREGADO',
+  CANCELADO: 'CANCELADO',
+} as const;
+
+export type EstadoEncomienda = typeof EstadoEncomienda[keyof typeof EstadoEncomienda];
 
 // ─── Interfaces del usuario ───────────────────────────────────
 export interface Usuario {
   id: string;
   nombre: string;
   email: string;
+  telefono?: string;
   rol: Rol;
   activo: boolean;
 }
@@ -104,6 +109,40 @@ export interface UpdateParcelStatusInput {
 export interface ConfirmarRetiroInput {
   parcelId: string;
   recipientCi: string;
+}
+
+// ─── Interfaces de Buses ─────────────────────────────────────
+export const BusEstado = {
+  CARGANDO: 'CARGANDO',
+  LISTO: 'LISTO',
+  EN_RUTA: 'EN_RUTA',
+  EN_MANTENIMIENTO: 'EN_MANTENIMIENTO',
+} as const;
+
+export type BusEstado = typeof BusEstado[keyof typeof BusEstado];
+
+export interface Bus {
+  id: string;
+  placa: string;
+  flota: string;
+  modelo?: string;
+  conductor?: string;
+  capacidad: number;
+  cargados: number;
+  routeCode: string;
+  routeLabel?: string;
+  estado: BusEstado;
+  activo: boolean;
+  salidaProgramada?: string;
+}
+
+export interface CrearBusInput {
+  placa: string;
+  flota?: string;
+  modelo?: string;
+  routeCode: string;
+  capacidad?: number;
+  salidaProgramada?: string;
 }
 
 // ─── Filtros para listado ─────────────────────────────────────

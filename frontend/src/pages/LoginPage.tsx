@@ -8,7 +8,7 @@ const ROLE_REDIRECTS: Record<Rol, string> = {
   [Rol.ADMINISTRADOR]: '/dashboard',
   [Rol.TAQUILLA]: '/taquilla',
   [Rol.BODEGA]: '/bodega',
-  [Rol.USUARIO]: '/mis-envios',
+  [Rol.CLIENTE]: '/mis-envios',
 };
 
 export default function LoginPage() {

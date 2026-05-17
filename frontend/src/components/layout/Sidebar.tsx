@@ -90,13 +90,14 @@ const NAV_BY_ROLE: Record<Rol, NavSection[]> = {
       ],
     },
   ],
-  [Rol.USUARIO]: [
+  [Rol.CLIENTE]: [
     {
       label: 'Mis envíos',
       items: [
         { label: 'Mis encomiendas', path: '/mis-envios', icon: <Package size={18} /> },
         { label: 'Nuevo envío', path: '/crear-envio', icon: <Plus size={18} /> },
         { label: 'Rastrear envío', path: '/rastreo', icon: <Search size={18} /> },
+        { label: 'Buses', path: '/buses', icon: <Truck size={18} /> },
       ],
     },
     {
@@ -112,7 +113,7 @@ const rolLabels: Record<Rol, string> = {
   [Rol.ADMINISTRADOR]: 'Administrador',
   [Rol.TAQUILLA]: 'Taquilla',
   [Rol.BODEGA]: 'Bodega',
-  [Rol.USUARIO]: 'Usuario',
+  [Rol.CLIENTE]: 'Usuario',
 };
 
 export default function Sidebar() {

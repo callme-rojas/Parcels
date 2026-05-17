@@ -91,3 +91,62 @@ export const GET_ME = gql`
     }
   }
 `;
+
+// ─── Buses Queries ──────────────────────────────────────────
+
+export const GET_BUSES = gql`
+  query GetBuses {
+    buses {
+      id
+      placa
+      flota
+      routeCode
+      cargados
+      estado
+      activo
+    }
+  }
+`;
+
+export const GET_BUSES_DISPONIBLES = gql`
+  query GetBusesDisponibles($routeCode: String) {
+    busesDisponibles(routeCode: $routeCode) {
+      id
+      placa
+      flota
+      routeCode
+      routeLabel
+      capacidad
+      cargados
+      estado
+      salidaProgramada
+      conductor
+    }
+  }
+`;
+
+export const GET_BUS = gql`
+  query GetBus($id: ID!) {
+    bus(id: $id) {
+      id
+      placa
+      flota
+      modelo
+      conductor
+      capacidad
+      cargados
+      estado
+      routeCode
+    }
+  }
+`;
+
+export const GET_ULTIMA_UBICACION_BUS = gql`
+  query UltimaUbicacionBus($busId: ID!) {
+    ultimaUbicacionBus(busId: $busId) {
+      lat
+      lng
+      recordedAt
+    }
+  }
+`;
