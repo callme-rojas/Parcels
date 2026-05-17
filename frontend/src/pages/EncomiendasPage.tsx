@@ -8,9 +8,6 @@ import type { EstadoEncomienda, Parcel } from '../types';
 import { useParcels } from '../hooks/useParcel';
 import { RUTAS_DISPONIBLES } from '../types';
 
-// ─── Helpers ───────────────────────────────────────────────: 'EN_TRANSITO' as EstadoEncomienda, peso: 9.3, contenido: 'Materiales de construcción', creadoEn: '2026-05-10T07:00:00', bus: 'Flota 05 · 1876-MNP' },
-];
-
 // ─── Helpers ───────────────────────────────────────────────
 const ESTADO_CONFIG: Record<string, { label: string; className: string }> = {
   REGISTRADO: { label: 'Pre-registrada', className: 'badge badge--gray' },

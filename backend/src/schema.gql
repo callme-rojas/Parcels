@@ -7,6 +7,15 @@ type AuthPayload {
   user: User!
 }
 
+"""Datos para confirmar retiro de encomienda"""
+input ConfirmarRetiroInput {
+  """ID de la encomienda a entregar"""
+  parcelId: String!
+
+  """CI del destinatario presentado en ventanilla"""
+  recipientCi: String!
+}
+
 input CrearUsuarioInput {
   email: String!
   nombre: String!
@@ -14,35 +23,42 @@ input CrearUsuarioInput {
   rol: Rol!
 }
 
+"""Datos para crear una encomienda"""
 input CreateParcelInput {
-  """Destination address"""
-  destinationAddress: String
+  """Descripción / contenido del paquete"""
+  content: String!
 
-  """Destination latitude"""
-  destinationLat: Float
+  """Observaciones o instrucciones especiales"""
+  observations: String
 
-  """Destination longitude"""
-  destinationLng: Float
+  """CI del destinatario (para verificar entrega)"""
+  recipientCi: String!
 
-  """Origin address"""
-  originAddress: String
+  """Email del destinatario (opcional)"""
+  recipientEmail: String
 
-  """Origin latitude"""
-  originLat: Float
-
-  """Origin longitude"""
-  originLng: Float
-
-  """Recipient name"""
+  """Nombre completo del destinatario"""
   recipientName: String!
 
-  """Route code (SCZ-PQA, ...)"""
-  routeCode: String
+  """Teléfono del destinatario"""
+  recipientPhone: String!
 
-  """Sender name"""
+  """Código de ruta (ej. SCZ-PQA, PQA-SCZ, SCZ-SJC, SCZ-ROB)"""
+  routeCode: String!
+
+  """CI del remitente"""
+  senderCi: String!
+
+  """Email del remitente"""
+  senderEmail: String!
+
+  """Nombre completo del remitente"""
   senderName: String!
 
-  """Weight in kg"""
+  """Teléfono del remitente"""
+  senderPhone: String!
+
+  """Peso declarado en kg"""
   weight: Float!
 }
 
@@ -57,82 +73,130 @@ input LoginInput {
 }
 
 type Mutation {
+  """Confirmar retiro de encomienda con verificación de CI (TAQUILLA)"""
+  confirmarRetiro(input: ConfirmarRetiroInput!): Parcel!
   crearUsuario(input: CrearUsuarioInput!): User!
 
-  """Create a new parcel"""
+  """Crear encomienda (pública o autenticada)"""
   createParcel(input: CreateParcelInput!): Parcel!
+
+  """Crear encomienda (autenticado — registra usuario creador)"""
+  createParcelAuth(input: CreateParcelInput!): Parcel!
   login(input: LoginInput!): AuthPayload!
   registerCliente(input: RegisterClienteInput!): AuthPayload!
 
-  """Delete a parcel"""
+  """Eliminar encomienda (solo ADMINISTRADOR)"""
   removeParcel(id: ID!): Boolean!
 
-  """Update parcel status"""
+  """Actualizar estado de encomienda (TAQUILLA / BODEGA)"""
   updateParcelStatus(input: UpdateParcelStatusInput!): Parcel!
 }
 
-"""A parcel/encomienda being shipped"""
+"""Encomienda / paquete en tránsito"""
 type Parcel {
-  """Date the parcel was created"""
+  """Descripción / contenido del paquete"""
+  content: String!
   createdAt: DateTime!
-
-  """Date the parcel was delivered"""
   deliveredAt: DateTime
 
-  """Destination address"""
+  """Ciudad / dirección de destino"""
   destinationAddress: String!
-
-  """Destination latitude"""
   destinationLat: Float!
-
-  """Destination longitude"""
   destinationLng: Float!
+  events: [ParcelEvent!]
   id: ID!
 
-  """Origin address"""
+  """Observaciones adicionales"""
+  observations: String
+
+  """Ciudad / dirección de origen"""
   originAddress: String!
-
-  """Origin latitude"""
   originLat: Float!
-
-  """Origin longitude"""
   originLng: Float!
 
-  """Recipient name"""
+  """CI del destinatario (para verificar entrega)"""
+  recipientCi: String!
+
+  """Email del destinatario (opcional)"""
+  recipientEmail: String
+
+  """Nombre del destinatario"""
   recipientName: String!
 
-  """Sender name"""
+  """Teléfono del destinatario"""
+  recipientPhone: String!
+
+  """Código de ruta (ej. SCZ-PQA)"""
+  routeCode: String!
+
+  """CI del remitente"""
+  senderCi: String!
+
+  """Email del remitente"""
+  senderEmail: String!
+
+  """Nombre del remitente"""
   senderName: String!
 
-  """Current parcel status"""
+  """Teléfono del remitente"""
+  senderPhone: String!
   status: ParcelStatus!
 
-  """Tracking number"""
+  """Número de rastreo único"""
   trackingNumber: String!
+  updatedAt: DateTime!
 
-  """Weight in kg"""
+  """Peso declarado en kg"""
   weight: Float!
 }
 
-"""The current status of a parcel"""
+"""Evento de estado de una encomienda"""
+type ParcelEvent {
+  createdAt: DateTime!
+  id: ID!
+  note: String
+  parcelId: String!
+  status: ParcelStatus!
+  usuarioId: String
+}
+
+"""Estado operativo de la encomienda"""
 enum ParcelStatus {
-  CANCELLED
-  DELIVERED
-  IN_TRANSIT
-  PENDING
+  CANCELADO
+  DISPONIBLE
+  ENTREGADO
+  EN_DESTINO
+  EN_TRANSITO
+  RECEPCIONADO
+  REGISTRADO
+}
+
+"""Filtros para listar encomiendas"""
+input ParcelsFilterInput {
+  page: Int = 1
+  pageSize: Int = 20
+
+  """Código de ruta (ej. SCZ-PQA)"""
+  routeCode: String
+
+  """Buscar por nombre de remitente, destinatario o código"""
+  search: String
+  status: ParcelStatus
 }
 
 type Query {
+  """Crear encomienda sin autenticación (flujo público)"""
+  createParcelPublic(input: CreateParcelInput!): Parcel!
   me: User!
 
-  """Get a parcel by ID"""
+  """Obtener encomienda por ID (requiere auth)"""
   parcel(id: ID!): Parcel!
 
-  """Get a parcel by tracking number"""
+  """Rastrear encomienda por código (pública, sin auth)"""
   parcelByTracking(trackingNumber: String!): Parcel!
 
-  """Get all parcels"""
-  parcels: [Parcel!]!
+  """Listar encomiendas con filtros (requiere auth)"""
+  parcels(filter: ParcelsFilterInput): [Parcel!]!
 }
 
 input RegisterClienteInput {
@@ -148,11 +212,15 @@ enum Rol {
   TAQUILLA
 }
 
+"""Actualizar estado de una encomienda"""
 input UpdateParcelStatusInput {
-  """The parcel ID to update"""
-  id: ID!
+  """ID de la encomienda a actualizar"""
+  id: String!
 
-  """New status for the parcel"""
+  """Observación o nota del cambio de estado"""
+  note: String
+
+  """Nuevo estado"""
   status: ParcelStatus!
 }
 

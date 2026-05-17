@@ -4,7 +4,7 @@
  * Encapsula todas las queries/mutations de Apollo relacionadas a parcels
  * para que los componentes no dependan directamente de Apollo.
  */
-import { useQuery, useMutation, ApolloError } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { GET_PARCELS, GET_PARCEL, GET_PARCEL_BY_TRACKING } from '../graphql/queries';
 import {
   CREATE_PARCEL_MUTATION,
@@ -26,14 +26,14 @@ import { useAuthStore } from '../stores/authStore';
 export interface UseParcelsReturn {
   parcels: Parcel[];
   loading: boolean;
-  error?: ApolloError;
+  error?: Error;
   refetch: () => void;
 }
 
 export interface UseParcelReturn {
   parcel: Parcel | null;
   loading: boolean;
-  error?: ApolloError;
+  error?: Error;
   refetch: () => void;
 }
 
