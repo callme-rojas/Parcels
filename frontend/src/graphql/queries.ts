@@ -153,3 +153,31 @@ export const GET_ULTIMA_UBICACION_BUS = gql`
     }
   }
 `;
+
+export const GET_RESUMEN_DASHBOARD = gql`
+  query ResumenDashboard {
+    resumenDashboard {
+      fechaReferencia
+      registradasHoy
+      entregadasHoy
+      enTransito
+      disponiblesRetiro
+      ultimasEncomiendas {
+        id
+        trackingNumber
+        senderName
+        recipientName
+        routeCode
+        routeLabel
+        status
+        createdAt
+      }
+      topRutas {
+        routeCode
+        routeLabel
+        total
+        porcentaje
+      }
+    }
+  }
+`;
