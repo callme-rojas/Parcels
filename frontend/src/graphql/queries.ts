@@ -25,6 +25,9 @@ export const PARCEL_BASE_FIELDS = gql`
     destinationLat
     destinationLng
     status
+    assignedBusId
+    assignedBusPlaca
+    assignedBusFlota
     createdAt
     updatedAt
     deliveredAt

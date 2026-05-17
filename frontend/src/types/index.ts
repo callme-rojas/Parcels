@@ -63,6 +63,11 @@ export interface Parcel {
   weight: number;
   observations?: string;
 
+  // Asignación a bus
+  assignedBusId?: string;
+  assignedBusPlaca?: string;
+  assignedBusFlota?: string;
+
   // Route
   routeCode: string;
   originAddress: string;

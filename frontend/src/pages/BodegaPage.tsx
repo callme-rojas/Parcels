@@ -1,381 +1,381 @@
 import { useState } from 'react';
+import { useQuery, useMutation } from '@apollo/client/react';
 import {
   Warehouse, Truck, PackageCheck, PackageX, Package,
-  ArrowRight, CheckCircle2, ChevronDown, Eye,
-  ArrowUpDown, AlertCircle, Loader2
+  CheckCircle2, Loader2, MapPin
 } from 'lucide-react';
-import { useParcels, useUpdateParcelStatus } from '../hooks/useParcel';
 import { EstadoEncomienda } from '../types';
+import type { Parcel, Bus } from '../types';
+import { GET_PARCELS, GET_BUSES } from '../graphql/queries';
+import {
+  CLASIFICAR_ENCOMIENDA,
+  ASIGNAR_BUS,
+  REGISTRAR_CARGA,
+  REGISTRAR_DESCARGA,
+  MARCAR_DISPONIBLE
+} from '../graphql/mutations';
 
-// ─── Mock Data ─────────────────────────────────────────
-type BodegaTab = 'clasificar' | 'carga' | 'descarga';
-
-interface EncBodega {
-  id: string;
-  codigo: string;
-  remitente: string;
-  ruta: string;
-  peso: number;
-  contenido: string;
-  horaRecepcion: string;
-  prioridad?: 'alta' | 'media' | 'normal';
-}
-
-interface BusInfo {
-  id: string;
-  placa: string;
-  flota: string;
-  ruta: string;
-  capacidad: number;
-  cargados: number;
-  salida: string;
-  estado: 'cargando' | 'listo' | 'en_ruta';
-}
-
-const MOCK_CLASIFICAR: EncBodega[] = [
-  { id: '1', codigo: 'EX-2026-SCZ-0048229', remitente: 'Laura Peña', ruta: 'SCZ → PQA', peso: 2.3, contenido: 'Libros y papelería', horaRecepcion: '16:30', prioridad: 'normal' },
-  { id: '2', codigo: 'EX-2026-SCZ-0048230', remitente: 'Gabriel Torrez', ruta: 'SCZ → ROB', peso: 6.1, contenido: 'Repuestos industriales · Frágil', horaRecepcion: '16:15', prioridad: 'alta' },
-  { id: '3', codigo: 'EX-2026-PQA-0012344', remitente: 'Alejandro Rivas', ruta: 'PQA → SCZ', peso: 9.3, contenido: 'Materiales de construcción', horaRecepcion: '15:50', prioridad: 'media' },
-  { id: '4', codigo: 'EX-2026-SCZ-0048231', remitente: 'Cecilia Flores', ruta: 'SCZ → SJC', peso: 3.0, contenido: 'Regalos personales', horaRecepcion: '15:30', prioridad: 'normal' },
-  { id: '5', codigo: 'EX-2026-SCZ-0048232', remitente: 'Fernando Díaz', ruta: 'SCZ → PQA', peso: 4.0, contenido: 'Medicamentos', horaRecepcion: '14:45', prioridad: 'alta' },
-];
-
-const MOCK_BUSES: BusInfo[] = [
-  { id: 'b1', placa: '2845-KCN', flota: 'Flota 18', ruta: 'SCZ → PQA', capacidad: 30, cargados: 12, salida: '18:00', estado: 'cargando' },
-  { id: 'b2', placa: '3190-BTZ', flota: 'Flota 22', ruta: 'SCZ → ROB', capacidad: 25, cargados: 8, salida: '19:30', estado: 'cargando' },
-  { id: 'b3', placa: '1876-MNP', flota: 'Flota 05', ruta: 'SCZ → SJC', capacidad: 20, cargados: 20, salida: '15:00', estado: 'en_ruta' },
-];
-
-const MOCK_CARGA: Array<{ id: string; codigo: string; ruta: string; peso: number; bus: string; estado: 'pendiente' | 'cargado' }> = [
-  { id: 'c1', codigo: 'EX-2026-SCZ-0048217', ruta: 'SCZ → PQA', peso: 3.3, bus: 'Flota 18 · 2845-KCN', estado: 'cargado' },
-  { id: 'c2', codigo: 'EX-2026-SCZ-0048221', ruta: 'SCZ → PQA', peso: 4.0, bus: 'Flota 18 · 2845-KCN', estado: 'cargado' },
-  { id: 'c3', codigo: 'EX-2026-SCZ-0048224', ruta: 'SCZ → ROB', peso: 6.1, bus: 'Flota 22 · 3190-BTZ', estado: 'pendiente' },
-  { id: 'c4', codigo: 'EX-2026-PQA-0012343', ruta: 'PQA → SCZ', peso: 9.3, bus: 'Flota 05 · 1876-MNP', estado: 'cargado' },
-];
-
-const MOCK_DESCARGA: Array<{ id: string; codigo: string; ruta: string; peso: number; bus: string; }> = [
-  { id: 'd1', codigo: 'EX-2026-PQA-0012340', ruta: 'PQA → SCZ', peso: 2.1, bus: 'Flota 12 · 4521-ABZ' },
-  { id: 'd2', codigo: 'EX-2026-PQA-0012342', ruta: 'PQA → SCZ', peso: 4.7, bus: 'Flota 12 · 4521-ABZ' },
-];
-
-const PRIORIDAD_CONFIG: Record<string, { label: string; className: string }> = {
-  alta: { label: 'Alta', className: 'badge badge--red' },
-  media: { label: 'Media', className: 'badge badge--amber' },
-  normal: { label: 'Normal', className: 'badge badge--gray' },
-};
-
-const BUS_ESTADO_CONFIG: Record<string, { label: string; className: string }> = {
-  cargando: { label: 'Cargando', className: 'badge badge--amber' },
-  listo: { label: 'Listo', className: 'badge badge--emerald' },
-  en_ruta: { label: 'En ruta', className: 'badge badge--blue' },
-};
+type BodegaTab = 'despacho' | 'transito' | 'llegada';
 
 export default function BodegaPage() {
-  const [activeTab, setActiveTab] = useState<BodegaTab>('clasificar');
-  const [selectedBus, setSelectedBus] = useState<string | null>(null);
-  const [asignando, setAsignando] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<BodegaTab>('despacho');
   const [actionMsg, setActionMsg] = useState('');
+  const [asignandoId, setAsignandoId] = useState<string | null>(null);
+  const [selectedBus, setSelectedBus] = useState<string>('');
 
-  // Real data from backend
-  const { parcels: porClasificar, loading: loadingClas, refetch: refetchClas } =
-    useParcels({ status: EstadoEncomienda.RECEPCIONADO });
-  const { parcels: enTransito, loading: loadingTransito, refetch: refetchTransito } =
-    useParcels({ status: EstadoEncomienda.EN_TRANSITO });
-  const { parcels: enDestino, loading: loadingDestino, refetch: refetchDestino } =
-    useParcels({ status: EstadoEncomienda.EN_DESTINO });
+  // ─── Queries ──────────────────────────────────────────────
+  const { data: qRecepcionado, loading: lRec, refetch: rRec } = useQuery<{ parcels: Parcel[] }>(GET_PARCELS, {
+    variables: { filter: { status: EstadoEncomienda.RECEPCIONADO } },
+    fetchPolicy: 'cache-and-network',
+  });
+  
+  const { data: qTransito, loading: lTra, refetch: rTra } = useQuery<{ parcels: Parcel[] }>(GET_PARCELS, {
+    variables: { filter: { status: EstadoEncomienda.EN_TRANSITO } },
+    fetchPolicy: 'cache-and-network',
+  });
 
-  const { updateStatus } = useUpdateParcelStatus();
+  const { data: qDestino, loading: lDes, refetch: rDes } = useQuery<{ parcels: Parcel[] }>(GET_PARCELS, {
+    variables: { filter: { status: EstadoEncomienda.EN_DESTINO } },
+    fetchPolicy: 'cache-and-network',
+  });
 
-  const handleCarga = async (parcelId: string, codigo: string) => {
-    try {
-      await updateStatus({ id: parcelId, status: EstadoEncomienda.EN_TRANSITO, note: 'Cargado en bus' });
-      setActionMsg(`✅ ${codigo} → EN_TRANSITO`);
-      refetchClas();
-      refetchTransito();
-    } catch (e: any) { setActionMsg(`❌ ${e?.message}`); }
+  const { data: qBuses } = useQuery<{ buses: Bus[] }>(GET_BUSES, { fetchPolicy: 'cache-and-network' });
+
+  // ─── Mutations ─────────────────────────────────────────────
+  const [clasificar] = useMutation(CLASIFICAR_ENCOMIENDA);
+  const [asignarBus] = useMutation(ASIGNAR_BUS);
+  const [registrarCarga] = useMutation(REGISTRAR_CARGA);
+  const [registrarDescarga] = useMutation(REGISTRAR_DESCARGA);
+  const [marcarDisponible] = useMutation(MARCAR_DISPONIBLE);
+
+  // ─── Data Processing ───────────────────────────────────────
+  const recepcionados: Parcel[] = qRecepcionado?.parcels || [];
+  const enTransito: Parcel[] = qTransito?.parcels || [];
+  const enDestino: Parcel[] = qDestino?.parcels || [];
+  const buses: Bus[] = qBuses?.buses || [];
+
+  const unassigned = recepcionados.filter(p => !p.assignedBusId);
+  const assigned = recepcionados.filter(p => p.assignedBusId);
+
+  // ─── Handlers ──────────────────────────────────────────────
+  const notify = (msg: string, isError = false) => {
+    setActionMsg(`${isError ? '❌' : '✅'} ${msg}`);
+    setTimeout(() => setActionMsg(''), 5000);
   };
 
-  const handleDescarga = async (parcelId: string, codigo: string) => {
+  const handleClasificar = async (id: string) => {
     try {
-      await updateStatus({ id: parcelId, status: EstadoEncomienda.EN_DESTINO, note: 'Descargado en destino' });
-      setActionMsg(`✅ ${codigo} → EN_DESTINO`);
-      refetchTransito();
-      refetchDestino();
-    } catch (e: any) { setActionMsg(`❌ ${e?.message}`); }
+      await clasificar({ variables: { id } });
+      notify('Encomienda clasificada');
+      rRec();
+    } catch (e: any) { notify(e.message, true); }
   };
 
-  const handleDisponible = async (parcelId: string, codigo: string) => {
+  const handleAsignarBus = async (parcelId: string) => {
+    if (!selectedBus) return;
     try {
-      await updateStatus({ id: parcelId, status: EstadoEncomienda.DISPONIBLE, note: 'Disponible para retiro en ventanilla' });
-      setActionMsg(`✅ ${codigo} → DISPONIBLE`);
-      refetchDestino();
-    } catch (e: any) { setActionMsg(`❌ ${e?.message}`); }
+      await asignarBus({ variables: { input: { parcelId, busId: selectedBus, note: 'Asignado a bus' } } });
+      notify('Bus asignado exitosamente');
+      setAsignandoId(null);
+      setSelectedBus('');
+      rRec();
+    } catch (e: any) { notify(e.message, true); }
+  };
+
+  const handleCarga = async (id: string) => {
+    try {
+      await registrarCarga({ variables: { id } });
+      notify('Carga registrada, encomienda EN TRANSITO');
+      rRec();
+      rTra();
+    } catch (e: any) { notify(e.message, true); }
+  };
+
+  const handleDescarga = async (id: string) => {
+    try {
+      await registrarDescarga({ variables: { id } });
+      notify('Descarga registrada, encomienda EN DESTINO');
+      rTra();
+      rDes();
+    } catch (e: any) { notify(e.message, true); }
+  };
+
+  const handleDisponible = async (id: string) => {
+    try {
+      await marcarDisponible({ variables: { id } });
+      notify('Encomienda lista para retiro (DISPONIBLE)');
+      rDes();
+    } catch (e: any) { notify(e.message, true); }
   };
 
   return (
-    <div className="panel-page">
-      {/* ─── KPIs ────────────────────────────── */}
-      <section className="dashboard__kpis">
-        <div className="kpi-card kpi-card--amber">
-          <div className="kpi-card__header"><span className="kpi-card__icon"><Warehouse size={22} /></span></div>
-          <div className="kpi-card__value">{MOCK_CLASIFICAR.length}</div>
-          <div className="kpi-card__label">Por clasificar</div>
-        </div>
-        <div className="kpi-card kpi-card--blue">
-          <div className="kpi-card__header"><span className="kpi-card__icon"><Truck size={22} /></span></div>
-          <div className="kpi-card__value">{MOCK_BUSES.filter(b => b.estado === 'cargando').length}</div>
-          <div className="kpi-card__label">Buses cargando</div>
-        </div>
-        <div className="kpi-card kpi-card--emerald">
-          <div className="kpi-card__header"><span className="kpi-card__icon"><PackageCheck size={22} /></span></div>
-          <div className="kpi-card__value">20</div>
-          <div className="kpi-card__label">Cargadas hoy</div>
-        </div>
-        <div className="kpi-card kpi-card--purple">
-          <div className="kpi-card__header"><span className="kpi-card__icon"><PackageX size={22} /></span></div>
-          <div className="kpi-card__value">{MOCK_DESCARGA.length}</div>
-          <div className="kpi-card__label">Pendientes descarga</div>
-        </div>
-      </section>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
+          Operaciones de Bodega
+        </h1>
+        <p className="text-slate-400 mt-1">
+          Asigna encomiendas a buses, registra cargas y recibe paquetes en destino.
+        </p>
+      </div>
 
-      {/* ─── Tab Navigation ────────────────────── */}
-      <div className="taq-tabs">
-        <button className={`taq-tab ${activeTab === 'clasificar' ? 'taq-tab--active' : ''}`} onClick={() => setActiveTab('clasificar')}>
-          <Warehouse size={16} /> Clasificar
-          <span className="enc-tab__count">{MOCK_CLASIFICAR.length}</span>
+      {actionMsg && (
+        <div className={`p-4 rounded-xl font-medium border flex items-center gap-3 animate-fade-in ${actionMsg.includes('❌') ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
+          {actionMsg}
+        </div>
+      )}
+
+      {/* ─── KPIs ────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-5 flex items-center gap-4">
+          <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl"><Warehouse size={24} /></div>
+          <div>
+            <p className="text-sm text-slate-400">Por Asignar</p>
+            <p className="text-2xl font-bold text-slate-100">{lRec ? <Loader2 className="animate-spin w-5 h-5"/> : unassigned.length}</p>
+          </div>
+        </div>
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-5 flex items-center gap-4">
+          <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl"><Truck size={24} /></div>
+          <div>
+            <p className="text-sm text-slate-400">Por Cargar al Bus</p>
+            <p className="text-2xl font-bold text-slate-100">{lRec ? <Loader2 className="animate-spin w-5 h-5"/> : assigned.length}</p>
+          </div>
+        </div>
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-5 flex items-center gap-4">
+          <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl"><PackageCheck size={24} /></div>
+          <div>
+            <p className="text-sm text-slate-400">En Tránsito</p>
+            <p className="text-2xl font-bold text-slate-100">{lTra ? <Loader2 className="animate-spin w-5 h-5"/> : enTransito.length}</p>
+          </div>
+        </div>
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-5 flex items-center gap-4">
+          <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl"><Package size={24} /></div>
+          <div>
+            <p className="text-sm text-slate-400">En Bodega (Destino)</p>
+            <p className="text-2xl font-bold text-slate-100">{lDes ? <Loader2 className="animate-spin w-5 h-5"/> : enDestino.length}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── TABS ────────────────────────────── */}
+      <div className="flex bg-slate-800/50 p-1.5 rounded-2xl border border-slate-700/50 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('despacho')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${
+            activeTab === 'despacho' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+          }`}
+        >
+          <Warehouse size={18} /> Origen: Despacho y Carga
         </button>
-        <button className={`taq-tab ${activeTab === 'carga' ? 'taq-tab--active' : ''}`} onClick={() => setActiveTab('carga')}>
-          <PackageCheck size={16} /> Carga
-          <span className="enc-tab__count">{MOCK_CARGA.filter(c => c.estado === 'pendiente').length}</span>
+        <button
+          onClick={() => setActiveTab('transito')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${
+            activeTab === 'transito' ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+          }`}
+        >
+          <Truck size={18} /> En Tránsito: Descargar
         </button>
-        <button className={`taq-tab ${activeTab === 'descarga' ? 'taq-tab--active' : ''}`} onClick={() => setActiveTab('descarga')}>
-          <PackageX size={16} /> Descarga
-          <span className="enc-tab__count">{MOCK_DESCARGA.length}</span>
+        <button
+          onClick={() => setActiveTab('llegada')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium transition-all ${
+            activeTab === 'llegada' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+          }`}
+        >
+          <Package size={18} /> Destino: Disponer en Ventanilla
         </button>
       </div>
 
-      {/* ═══ Tab: Clasificar ═══════════════════ */}
-      {activeTab === 'clasificar' && (
-        <div className="taq-content">
-          <div className="bodega-dual-layout">
-            {/* Left: Pending items */}
-            <div className="dashboard-panel" style={{ animationDelay: '0s' }}>
-              <div className="dashboard-panel__header">
-                <span className="dashboard-panel__title">
-                  <Package size={16} /> Encomiendas recepcionadas
-                </span>
-              </div>
-              <div className="dashboard-panel__body" style={{ padding: 0 }}>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Código</th>
-                      <th>Ruta</th>
-                      <th>Peso</th>
-                      <th>Prioridad</th>
-                      <th style={{ width: 200 }}>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {MOCK_CLASIFICAR.map((enc) => {
-                      const prio = PRIORIDAD_CONFIG[enc.prioridad || 'normal'];
-                      return (
-                        <tr key={enc.id}>
-                          <td>
-                            <span className="data-table__code">{enc.codigo}</span>
-                            <br />
-                            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{enc.contenido}</span>
-                          </td>
-                          <td><span className="data-table__route">{enc.ruta}</span></td>
-                          <td>{enc.peso} kg</td>
-                          <td>
-                            <span className={prio.className}><span className="badge__dot" /> {prio.label}</span>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                              {asignando === enc.id ? (
-                                <div className="bodega-bus-select">
-                                  <select
-                                    className="form-input"
-                                    style={{ padding: '4px 8px', fontSize: 12 }}
-                                    value={selectedBus || ''}
-                                    onChange={(e) => setSelectedBus(e.target.value)}
-                                  >
-                                    <option value="">Seleccionar bus...</option>
-                                    {MOCK_BUSES.filter(b => b.estado === 'cargando').map((bus) => (
-                                      <option key={bus.id} value={bus.id}>
-                                        {bus.flota} · {bus.placa} ({bus.ruta})
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <button
-                                    className="btn btn--primary btn--sm"
-                                    disabled={!selectedBus}
-                                    onClick={() => selectedBus && handleAsignarBus(enc.id, selectedBus)}
-                                  >
-                                    Confirmar
-                                  </button>
-                                  <button className="btn btn--secondary btn--sm" onClick={() => setAsignando(null)}>✕</button>
-                                </div>
-                              ) : (
-                                <>
-                                  <button className="btn btn--primary btn--sm" onClick={() => setAsignando(enc.id)}>
-                                    <Truck size={13} /> Asignar a bus
-                                  </button>
-                                  <button className="enc-action-btn" title="Clasificar" onClick={() => handleClasificar(enc.codigo)}>
-                                    <CheckCircle2 size={14} />
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Right: Buses info */}
-            <div className="dashboard-panel" style={{ animationDelay: '0.1s' }}>
-              <div className="dashboard-panel__header">
-                <span className="dashboard-panel__title"><Truck size={16} /> Buses disponibles</span>
-              </div>
-              <div className="dashboard-panel__body" style={{ padding: 0 }}>
-                {MOCK_BUSES.map((bus) => {
-                  const estadoBadge = BUS_ESTADO_CONFIG[bus.estado];
-                  const pct = Math.round((bus.cargados / bus.capacidad) * 100);
-                  return (
-                    <div key={bus.id} className="bodega-bus-card">
-                      <div className="bodega-bus-card__header">
-                        <div>
-                          <strong>{bus.flota}</strong>
-                          <span className="bodega-bus-card__placa">{bus.placa}</span>
-                        </div>
-                        <span className={estadoBadge.className}>
-                          <span className="badge__dot" /> {estadoBadge.label}
-                        </span>
-                      </div>
-                      <div className="bodega-bus-card__details">
-                        <span>{bus.ruta}</span>
-                        <span>Salida: {bus.salida}</span>
-                      </div>
-                      <div className="bodega-bus-card__capacity">
-                        <div className="bodega-bus-card__bar">
-                          <div className="bodega-bus-card__bar-fill" style={{ width: `${pct}%` }} />
-                        </div>
-                        <span className="bodega-bus-card__cap-text">{bus.cargados}/{bus.capacidad} enc. ({pct}%)</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ Tab: Carga ════════════════════════ */}
-      {activeTab === 'carga' && (
-        <div className="taq-content">
-          <div className="dashboard-panel" style={{ animationDelay: '0s' }}>
-            <div className="dashboard-panel__header">
-              <span className="dashboard-panel__title">
-                <PackageCheck size={16} /> Registro de carga
-              </span>
-            </div>
-            <div className="dashboard-panel__body" style={{ padding: 0 }}>
-              <table className="data-table">
-                <thead>
+      <div className="bg-slate-800/40 backdrop-blur-xl border border-slate-700/50 rounded-3xl overflow-hidden">
+        
+        {/* TAB 1: DESPACHO Y CARGA */}
+        {activeTab === 'despacho' && (
+          <div className="p-0">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-900/50 text-slate-400 font-medium border-b border-slate-700/50">
+                <tr>
+                  <th className="py-4 px-6">Encomienda</th>
+                  <th className="py-4 px-6">Ruta</th>
+                  <th className="py-4 px-6">Peso / Contenido</th>
+                  <th className="py-4 px-6">Estado / Bus</th>
+                  <th className="py-4 px-6 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700/50">
+                {recepcionados.length === 0 && (
                   <tr>
-                    <th>Código</th>
-                    <th>Ruta</th>
-                    <th>Peso</th>
-                    <th>Bus asignado</th>
-                    <th>Estado</th>
-                    <th style={{ width: 160 }}>Acción</th>
+                    <td colSpan={5} className="py-12 text-center text-slate-500">No hay encomiendas recepcionadas esperando despacho.</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {MOCK_CARGA.map((enc) => (
-                    <tr key={enc.id}>
-                      <td><span className="data-table__code">{enc.codigo}</span></td>
-                      <td><span className="data-table__route">{enc.ruta}</span></td>
-                      <td>{enc.peso} kg</td>
-                      <td><span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{enc.bus}</span></td>
-                      <td>
-                        {enc.estado === 'cargado' ? (
-                          <span className="badge badge--green"><span className="badge__dot" /> Cargado</span>
-                        ) : (
-                          <span className="badge badge--amber"><span className="badge__dot" /> Pendiente</span>
-                        )}
-                      </td>
-                      <td>
-                        {enc.estado === 'pendiente' ? (
-                          <button className="btn btn--primary btn--sm" onClick={() => handleCarga(enc.codigo)}>
-                            <PackageCheck size={13} /> Registrar carga
-                          </button>
-                        ) : (
-                          <span style={{ fontSize: 12, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <CheckCircle2 size={14} /> Completado
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ Tab: Descarga ═════════════════════ */}
-      {activeTab === 'descarga' && (
-        <div className="taq-content">
-          <div className="dashboard-panel" style={{ animationDelay: '0s' }}>
-            <div className="dashboard-panel__header">
-              <span className="dashboard-panel__title">
-                <PackageX size={16} /> Encomiendas para descargar
-                {MOCK_DESCARGA.length > 0 && (
-                  <span className="badge badge--amber" style={{ marginLeft: 8 }}>
-                    <AlertCircle size={11} /> {MOCK_DESCARGA.length} pendientes
-                  </span>
                 )}
-              </span>
-            </div>
-            <div className="dashboard-panel__body" style={{ padding: 0 }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Ruta</th>
-                    <th>Peso</th>
-                    <th>Bus</th>
-                    <th style={{ width: 180 }}>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {MOCK_DESCARGA.map((enc) => (
-                    <tr key={enc.id}>
-                      <td><span className="data-table__code">{enc.codigo}</span></td>
-                      <td><span className="data-table__route">{enc.ruta}</span></td>
-                      <td>{enc.peso} kg</td>
-                      <td><span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{enc.bus}</span></td>
-                      <td>
-                        <button className="btn btn--primary btn--sm" onClick={() => handleDescarga(enc.codigo)}>
-                          <PackageX size={13} /> Registrar descarga
+                {recepcionados.map(enc => (
+                  <tr key={enc.id} className="hover:bg-slate-800/50 transition-colors">
+                    <td className="py-4 px-6">
+                      <p className="font-bold text-slate-200">{enc.trackingNumber}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{enc.senderName}</p>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/50 border border-slate-700 font-medium text-amber-400">
+                        <MapPin size={14} /> {enc.routeCode}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <p className="font-medium text-slate-200">{enc.weight} kg</p>
+                      <p className="text-xs text-slate-500 mt-0.5 truncate max-w-[150px]" title={enc.content}>{enc.content}</p>
+                    </td>
+                    <td className="py-4 px-6">
+                      {enc.assignedBusId ? (
+                        <div className="flex items-center gap-2 text-indigo-400 bg-indigo-400/10 px-3 py-1.5 rounded-lg w-fit border border-indigo-400/20">
+                          <Truck size={14} />
+                          <span className="font-medium text-xs">{enc.assignedBusPlaca}</span>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-medium text-amber-500/70 border border-amber-500/20 bg-amber-500/10 px-2 py-1 rounded-md">Sin asignar</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      {enc.assignedBusId ? (
+                        <button
+                          onClick={() => handleCarga(enc.id)}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-xl transition-all shadow-lg shadow-indigo-500/20"
+                        >
+                          <PackageCheck size={16} /> Cargar a Bus
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      ) : asignandoId === enc.id ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <select
+                            value={selectedBus}
+                            onChange={(e) => setSelectedBus(e.target.value)}
+                            className="bg-slate-900 border border-slate-700 text-slate-200 rounded-xl px-3 py-1.5 text-sm outline-none focus:border-amber-500"
+                          >
+                            <option value="">Selecciona bus...</option>
+                            {buses.filter(b => b.routeCode === enc.routeCode).map(b => (
+                              <option key={b.id} value={b.id}>{b.flota} ({b.placa}) - Disp: {b.capacidad - b.cargados}</option>
+                            ))}
+                          </select>
+                          <button onClick={() => handleAsignarBus(enc.id)} disabled={!selectedBus} className="bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-xl text-sm font-medium">OK</button>
+                          <button onClick={() => setAsignandoId(null)} className="text-slate-400 hover:text-white px-2 py-1.5">✕</button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleClasificar(enc.id)}
+                            className="inline-flex items-center gap-2 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-xl transition-colors"
+                            title="Dejar marca de clasificación en historial"
+                          >
+                            <Warehouse size={16} />
+                          </button>
+                          <button
+                            onClick={() => { setAsignandoId(enc.id); setSelectedBus(''); }}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-xl transition-all shadow-lg shadow-amber-500/20"
+                          >
+                            <Truck size={16} /> Asignar Bus
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* TAB 2: TRANSITO Y DESCARGA */}
+        {activeTab === 'transito' && (
+          <div className="p-0">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-900/50 text-slate-400 font-medium border-b border-slate-700/50">
+                <tr>
+                  <th className="py-4 px-6">Encomienda</th>
+                  <th className="py-4 px-6">Ruta</th>
+                  <th className="py-4 px-6">Bus asignado</th>
+                  <th className="py-4 px-6 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700/50">
+                {enTransito.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-12 text-center text-slate-500">No hay encomiendas en tránsito esperando descarga.</td>
+                  </tr>
+                )}
+                {enTransito.map(enc => (
+                  <tr key={enc.id} className="hover:bg-slate-800/50 transition-colors">
+                    <td className="py-4 px-6">
+                      <p className="font-bold text-slate-200">{enc.trackingNumber}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{enc.weight} kg · {enc.content}</p>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900/50 border border-slate-700 font-medium text-purple-400">
+                        <MapPin size={14} /> {enc.routeCode}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                       <p className="text-slate-200 font-medium">{enc.assignedBusFlota}</p>
+                       <p className="text-xs text-slate-500 mt-0.5">{enc.assignedBusPlaca}</p>
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <button
+                        onClick={() => handleDescarga(enc.id)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-medium rounded-xl transition-all shadow-lg shadow-purple-500/20"
+                      >
+                        <PackageX size={16} /> Registrar Descarga
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* TAB 3: DESTINO Y DISPONER */}
+        {activeTab === 'llegada' && (
+          <div className="p-0">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-900/50 text-slate-400 font-medium border-b border-slate-700/50">
+                <tr>
+                  <th className="py-4 px-6">Encomienda</th>
+                  <th className="py-4 px-6">Destinatario</th>
+                  <th className="py-4 px-6">Descargado de</th>
+                  <th className="py-4 px-6 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700/50">
+                {enDestino.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-12 text-center text-slate-500">No hay encomiendas en bodega esperando ser puestas a disposición.</td>
+                  </tr>
+                )}
+                {enDestino.map(enc => (
+                  <tr key={enc.id} className="hover:bg-slate-800/50 transition-colors">
+                    <td className="py-4 px-6">
+                      <p className="font-bold text-slate-200">{enc.trackingNumber}</p>
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 mt-1 rounded bg-slate-900/50 border border-slate-700 font-medium text-[10px] text-emerald-400">
+                        <MapPin size={10} /> {enc.routeCode}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <p className="text-slate-200 font-medium">{enc.recipientName}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">CI: {enc.recipientCi}</p>
+                    </td>
+                    <td className="py-4 px-6">
+                       <p className="text-slate-200 text-sm">{enc.assignedBusFlota}</p>
+                       <p className="text-xs text-slate-500 mt-0.5">{enc.assignedBusPlaca}</p>
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <button
+                        onClick={() => handleDisponible(enc.id)}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+                      >
+                        <CheckCircle2 size={16} /> Marcar Disponible
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

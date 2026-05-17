@@ -122,3 +122,58 @@ export const CREATE_BUS_MUTATION = gql`
     }
   }
 `;
+
+// ─── Bodega Mutations (Fase 2 y 3) ──────────────────────────
+
+export const CLASIFICAR_ENCOMIENDA = gql`
+  mutation Clasificar($id: ID!) {
+    clasificarEncomienda(id: $id) {
+      id
+      trackingNumber
+      status
+    }
+  }
+`;
+
+export const ASIGNAR_BUS = gql`
+  mutation Asignar($input: AsignarEncomiendaBusInput!) {
+    asignarEncomiendaABus(input: $input) {
+      id
+      trackingNumber
+      status
+      assignedBusId
+      assignedBusPlaca
+      assignedBusFlota
+    }
+  }
+`;
+
+export const REGISTRAR_CARGA = gql`
+  mutation RegistrarCarga($id: ID!) {
+    registrarCarga(id: $id) {
+      id
+      trackingNumber
+      status
+    }
+  }
+`;
+
+export const REGISTRAR_DESCARGA = gql`
+  mutation RegistrarDescarga($id: ID!) {
+    registrarDescarga(id: $id) {
+      id
+      trackingNumber
+      status
+    }
+  }
+`;
+
+export const MARCAR_DISPONIBLE = gql`
+  mutation MarcarDisponible($id: ID!) {
+    marcarDisponible(id: $id) {
+      id
+      trackingNumber
+      status
+    }
+  }
+`;
