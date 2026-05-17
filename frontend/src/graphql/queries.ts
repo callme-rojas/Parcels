@@ -181,3 +181,49 @@ export const GET_RESUMEN_DASHBOARD = gql`
     }
   }
 `;
+
+export const GET_INDICADORES_OPERATIVOS = gql`
+  query IndicadoresOperativos($filter: IndicadoresFilterInput) {
+    indicadoresOperativos(filter: $filter) {
+      fechaDesde
+      fechaHasta
+      totalRegistradas
+      totalEntregadas
+      totalEnTransito
+      totalDisponibles
+      totalCanceladas
+      totalRecepcionadas
+      totalEnDestino
+      tasaEntregaExitosa
+      encomiendasPorRuta {
+        routeCode
+        routeLabel
+        total
+        porcentaje
+      }
+    }
+  }
+`;
+
+export const GET_REPORTE_ENCOMIENDAS = gql`
+  query ReporteEncomiendas($filter: ReporteEncomiendasFilterInput) {
+    reporteEncomiendas(filter: $filter) {
+      total
+      page
+      pageSize
+      totalPages
+      items {
+        id
+        trackingNumber
+        senderName
+        recipientName
+        routeCode
+        status
+        createdAt
+        weight
+        senderCi
+        recipientCi
+      }
+    }
+  }
+`;
