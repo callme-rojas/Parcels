@@ -17,10 +17,10 @@ async function main() {
 
   // ─── 1. Usuarios del sistema ────────────────────────────
   const userDefs = [
-    { nombre: 'Administrador',  email: 'admin@travell.test',    password: 'admin123',    rol: 'ADMINISTRADOR' as const },
-    { nombre: 'Carla Gutiérrez', email: 'taquilla@travell.test', password: 'taquilla123', rol: 'TAQUILLA'      as const },
-    { nombre: 'Marcos Suárez',  email: 'bodega@travell.test',   password: 'bodega123',   rol: 'BODEGA'        as const },
-    { nombre: 'Rosa Méndez',    email: 'cliente@travell.test',  password: 'cliente123',  rol: 'CLIENTE'       as const },
+    { nombre: 'Administrador', email: 'admin@travell.test', password: 'admin123', rol: 'ADMINISTRADOR' as const, telefono: '+591 70000001' },
+    { nombre: 'Carla Gutiérrez', email: 'taquilla@travell.test', password: 'taquilla123', rol: 'TAQUILLA' as const, telefono: '+591 70000002' },
+    { nombre: 'Marcos Suárez', email: 'bodega@travell.test', password: 'bodega123', rol: 'BODEGA' as const, telefono: '+591 70000003' },
+    { nombre: 'Rosa Méndez', email: 'cliente@travell.test', password: 'cliente123', rol: 'CLIENTE' as const, telefono: '+591 77123456' },
   ];
 
   const createdUsers: Record<string, string> = {};
@@ -29,14 +29,107 @@ async function main() {
     const passwordHash = await bcrypt.hash(u.password, SALT);
     const user = await prisma.usuario.upsert({
       where: { email: u.email },
-      update: { nombre: u.nombre, passwordHash, rol: u.rol, activo: true },
-      create: { nombre: u.nombre, email: u.email, passwordHash, rol: u.rol, activo: true },
+      update: { nombre: u.nombre, telefono: u.telefono, passwordHash, rol: u.rol, activo: true },
+      create: { nombre: u.nombre, email: u.email, telefono: u.telefono, passwordHash, rol: u.rol, activo: true },
     });
     createdUsers[u.rol] = user.id;
     console.log(`  ✅ Usuario ${u.rol}: ${u.email}`);
   }
 
-  // ─── 2. Encomiendas de prueba ────────────────────────────
+  // ─── 2. Buses de la flota ────────────────────────────────
+  const busDefs = [
+    {
+      placa: '2845-KCN',
+      modelo: 'Mercedes OF-1721',
+      flota: 'Flota 18',
+      routeCode: 'SCZ-PQA',
+      routeLabel: 'Santa Cruz → Puerto Quijarro',
+      capacidad: 30,
+      estado: 'CARGANDO' as const,
+      salidaProgramada: '18:00',
+      conductor: 'José Suárez',
+    },
+    {
+      placa: '3190-BTZ',
+      modelo: 'Scania K360',
+      flota: 'Flota 22',
+      routeCode: 'SCZ-ROB',
+      routeLabel: 'Santa Cruz → Roboré',
+      capacidad: 25,
+      estado: 'CARGANDO' as const,
+      salidaProgramada: '19:30',
+      conductor: 'María Condori',
+    },
+    {
+      placa: '1876-MNP',
+      modelo: 'Volvo B270R',
+      flota: 'Flota 05',
+      routeCode: 'SCZ-SJC',
+      routeLabel: 'Santa Cruz → San José de Chiquitos',
+      capacidad: 20,
+      estado: 'EN_RUTA' as const,
+      salidaProgramada: '15:00',
+      conductor: 'Pedro Roca',
+    },
+    {
+      placa: '4521-ABZ',
+      modelo: 'Mercedes OF-1418',
+      flota: 'Flota 12',
+      routeCode: 'PQA-SCZ',
+      routeLabel: 'Puerto Quijarro → Santa Cruz',
+      capacidad: 28,
+      estado: 'CARGANDO' as const,
+      salidaProgramada: '17:00',
+      conductor: 'Ana Villca',
+    },
+  ];
+
+  const busesByPlaca: Record<string, string> = {};
+
+  for (const b of busDefs) {
+    const bus = await prisma.bus.upsert({
+      where: { placa: b.placa },
+      update: {
+        modelo: b.modelo,
+        flota: b.flota,
+        routeCode: b.routeCode,
+        routeLabel: b.routeLabel,
+        capacidad: b.capacidad,
+        estado: b.estado,
+        salidaProgramada: b.salidaProgramada,
+        conductor: b.conductor,
+        activo: true,
+      },
+      create: {
+        placa: b.placa,
+        modelo: b.modelo,
+        flota: b.flota,
+        routeCode: b.routeCode,
+        routeLabel: b.routeLabel,
+        capacidad: b.capacidad,
+        estado: b.estado,
+        salidaProgramada: b.salidaProgramada,
+        conductor: b.conductor,
+        activo: true,
+      },
+    });
+    busesByPlaca[b.placa] = bus.id;
+    console.log(`  🚌 Bus ${b.flota} · ${b.placa} → ${b.routeCode}`);
+  }
+
+  // Coordenada demo para rastreo (bus SCZ-PQA)
+  const busPqa = busesByPlaca['2845-KCN'];
+  await prisma.busTrackingEvent.deleteMany({ where: { busId: busPqa } });
+  await prisma.busTrackingEvent.create({
+    data: {
+      busId: busPqa,
+      lat: -17.792,
+      lng: -63.175,
+      velocidad: 62,
+    },
+  });
+
+  // ─── 3. Encomiendas de prueba ────────────────────────────
   // Representan distintos estados del flujo operativo
   const parcelDefs = [
     {
@@ -173,6 +266,33 @@ async function main() {
       },
     });
     console.log(`  📦 Encomienda ${p.trackingNumber} → ${p.status}`);
+  }
+
+  // Encomienda en tránsito vinculada al bus Flota 18
+  const enTransito = await prisma.parcel.findUnique({
+    where: { trackingNumber: 'EX-2026-SCZ-0048217' },
+  });
+  if (enTransito && busPqa) {
+    await prisma.parcel.update({
+      where: { id: enTransito.id },
+      data: {
+        assignedBusId: busPqa,
+        assignedBusPlaca: '2845-KCN',
+        assignedBusFlota: 'Flota 18',
+      },
+    });
+    await prisma.parcelBusAssignment.deleteMany({
+      where: { parcelId: enTransito.id },
+    });
+    await prisma.parcelBusAssignment.create({
+      data: {
+        parcelId: enTransito.id,
+        busId: busPqa,
+        loadedAt: new Date('2026-05-10T13:30:00Z'),
+        isActive: true,
+      },
+    });
+    console.log('  🔗 EX-2026-SCZ-0048217 asignada a bus 2845-KCN');
   }
 
   console.log('\n✅ Seed completado exitosamente.\n');

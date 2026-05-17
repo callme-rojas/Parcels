@@ -6,6 +6,9 @@ import { CreateParcelInput } from './dto/create-parcel.input';
 import { UpdateParcelStatusInput } from './dto/update-parcel-status.input';
 import { ParcelsFilterInput } from './dto/parcels-filter.input';
 import { ConfirmarRetiroInput } from './dto/confirmar-retiro.input';
+import { ParcelActionInput } from './dto/parcel-action.input';
+import { AsignarBusInput } from './dto/asignar-bus.input';
+import { AsignarEncomiendaBusInput } from '../buses/dto/asignar-encomienda-bus.input';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -64,18 +67,10 @@ export class ParcelsResolver {
   // ─── MUTATIONS ────────────────────────────────────────────────────
 
   /**
-   * Crear encomienda.
-   * Pública: permite registro sin cuenta (senderCi, phone, email obligatorios).
-   * Si hay sesión activa, el usuarioId se registra en el evento.
+   * Crear encomienda (pública, sin auth).
    */
-  @Query(() => Parcel, {
-    name: 'createParcelPublic',
-    description: 'Crear encomienda sin autenticación (flujo público)',
-  })
-  // Nota: usamos Query temporalmente para exponer sin auth — luego el frontend
-  // usará mutation. El guard opcional se maneja con try/catch en el servicio.
   @Mutation(() => Parcel, {
-    description: 'Crear encomienda (pública o autenticada)',
+    description: 'Crear encomienda (pública, sin auth)',
   })
   createParcel(
     @Args('input') input: CreateParcelInput,
@@ -111,6 +106,98 @@ export class ParcelsResolver {
     @CurrentUser() user: JwtPayload,
   ): Promise<Parcel> {
     return this.parcelsService.updateStatus(input, user.sub);
+  }
+
+  // ─── Bodega (Fase 2) ─────────────────────────────────────────────
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(Rol.BODEGA, Rol.ADMINISTRADOR)
+  @Mutation(() => Parcel, {
+    description: 'Clasificar encomienda en bodega (RECEPCIONADO)',
+  })
+  clasificarEncomienda(
+    @Args('input') input: ParcelActionInput,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<Parcel> {
+    return this.parcelsService.clasificarEncomienda(
+      input.parcelId,
+      user.sub,
+      input.note,
+    );
+  }
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(Rol.BODEGA, Rol.ADMINISTRADOR)
+  @Mutation(() => Parcel, {
+    description:
+      'Asignar encomienda a bus por ID (RECEPCIONADO, valida ruta y capacidad)',
+  })
+  asignarEncomiendaABus(
+    @Args('input') input: AsignarEncomiendaBusInput,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<Parcel> {
+    return this.parcelsService.asignarEncomiendaABus(input, user.sub);
+  }
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(Rol.BODEGA, Rol.ADMINISTRADOR)
+  @Mutation(() => Parcel, {
+    description:
+      'Asignar por placa/flota (legacy; usa bus en BD si la placa existe)',
+  })
+  asignarBus(
+    @Args('input') input: AsignarBusInput,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<Parcel> {
+    return this.parcelsService.asignarBus(input, user.sub);
+  }
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(Rol.BODEGA, Rol.ADMINISTRADOR)
+  @Mutation(() => Parcel, {
+    description: 'Registrar carga en bus → EN_TRANSITO',
+  })
+  registrarCarga(
+    @Args('input') input: ParcelActionInput,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<Parcel> {
+    return this.parcelsService.registrarCarga(
+      input.parcelId,
+      user.sub,
+      input.note,
+    );
+  }
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(Rol.BODEGA, Rol.ADMINISTRADOR)
+  @Mutation(() => Parcel, {
+    description: 'Registrar descarga en destino → EN_DESTINO',
+  })
+  registrarDescarga(
+    @Args('input') input: ParcelActionInput,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<Parcel> {
+    return this.parcelsService.registrarDescarga(
+      input.parcelId,
+      user.sub,
+      input.note,
+    );
+  }
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(Rol.BODEGA, Rol.ADMINISTRADOR)
+  @Mutation(() => Parcel, {
+    description: 'Marcar disponible para retiro → DISPONIBLE',
+  })
+  marcarDisponible(
+    @Args('input') input: ParcelActionInput,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<Parcel> {
+    return this.parcelsService.marcarDisponible(
+      input.parcelId,
+      user.sub,
+      input.note,
+    );
   }
 
   /**

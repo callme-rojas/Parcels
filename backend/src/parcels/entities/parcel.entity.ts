@@ -112,6 +112,15 @@ export class Parcel {
   @Field(() => ParcelStatus)
   status!: ParcelStatus;
 
+  @Field({ nullable: true, description: 'ID del bus asignado en flota' })
+  assignedBusId?: string;
+
+  @Field({ nullable: true, description: 'Placa del bus asignado (bodega)' })
+  assignedBusPlaca?: string;
+
+  @Field({ nullable: true, description: 'Flota del bus asignado (bodega)' })
+  assignedBusFlota?: string;
+
   // Timestamps
   @Field()
   createdAt!: Date;

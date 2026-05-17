@@ -10,5 +10,8 @@ export class RegisterClienteInput {
 
   @Field()
   password!: string;
+
+  @Field({ nullable: true })
+  telefono?: string;
 }
 

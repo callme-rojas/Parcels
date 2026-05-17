@@ -4,6 +4,8 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { ParcelsModule } from './parcels/parcels.module';
+import { BusesModule } from './buses/buses.module';
+import { ReportsModule } from './reports/reports.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import type { Request } from 'express';
@@ -23,7 +25,9 @@ import type { Request } from 'express';
       context: ({ req }: { req: Request }) => ({ req }),
     }),
     AuthModule,
+    BusesModule,
     ParcelsModule,
+    ReportsModule,
   ],
 })
 export class AppModule {}

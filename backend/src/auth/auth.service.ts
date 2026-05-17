@@ -37,6 +37,7 @@ export class AuthService {
     id: string;
     nombre: string;
     email: string;
+    telefono?: string | null;
     rol: string;
     activo: boolean;
   }): User {
@@ -44,6 +45,7 @@ export class AuthService {
       id: user.id,
       nombre: user.nombre,
       email: user.email,
+      telefono: user.telefono ?? undefined,
       rol: user.rol as any,
       activo: user.activo,
     };
@@ -80,6 +82,7 @@ export class AuthService {
     nombre: string;
     email: string;
     password: string;
+    telefono?: string;
   }) {
     await this.assertEmailNotUsed(input.email);
 
@@ -87,6 +90,7 @@ export class AuthService {
     const user = await this.usersService.createUser({
       nombre: input.nombre,
       email: input.email,
+      telefono: input.telefono,
       passwordHash,
       rol: Rol.CLIENTE,
     });
@@ -104,6 +108,7 @@ export class AuthService {
     nombre: string;
     email: string;
     password: string;
+    telefono?: string;
     rol: Rol;
   }) {
     if (input.rol === Rol.CLIENTE) {
@@ -118,6 +123,7 @@ export class AuthService {
     const user = await this.usersService.createUser({
       nombre: input.nombre,
       email: input.email,
+      telefono: input.telefono,
       passwordHash,
       rol: input.rol,
     });

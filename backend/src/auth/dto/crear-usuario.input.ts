@@ -12,6 +12,9 @@ export class CrearUsuarioInput {
   @Field()
   password!: string;
 
+  @Field({ nullable: true })
+  telefono?: string;
+
   @Field(() => Rol)
   rol!: Rol;
 }

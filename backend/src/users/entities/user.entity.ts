@@ -12,6 +12,9 @@ export class User {
   @Field()
   email!: string;
 
+  @Field({ nullable: true })
+  telefono?: string;
+
   @Field(() => Rol)
   rol!: Rol;
 

@@ -19,11 +19,13 @@ export class UsersService {
     email: string;
     passwordHash: string;
     rol: Rol;
+    telefono?: string;
   }) {
     return await this.prisma.usuario.create({
       data: {
         nombre: input.nombre,
         email: input.email,
+        telefono: input.telefono,
         passwordHash: input.passwordHash,
         rol: input.rol,
         activo: true,

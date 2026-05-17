@@ -8,6 +8,9 @@ import { CreateParcelInput } from './dto/create-parcel.input';
 import { UpdateParcelStatusInput } from './dto/update-parcel-status.input';
 import { ParcelsFilterInput } from './dto/parcels-filter.input';
 import { ConfirmarRetiroInput } from './dto/confirmar-retiro.input';
+import { AsignarBusInput } from './dto/asignar-bus.input';
+import { AsignarEncomiendaBusInput } from '../buses/dto/asignar-encomienda-bus.input';
+import { BusesService } from '../buses/buses.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 // Transiciones de estado permitidas
@@ -69,7 +72,10 @@ const ROUTES: Record<
 
 @Injectable()
 export class ParcelsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly busesService: BusesService,
+  ) {}
 
   private toEntity(p: any): Parcel {
     return {
@@ -191,32 +197,39 @@ export class ParcelsService {
     return this.toEntity(created);
   }
 
-  async updateStatus(
-    input: UpdateParcelStatusInput,
-    usuarioId?: string,
-  ): Promise<Parcel> {
-    const parcel = await this.findOne(input.id);
-
-    const allowed = VALID_TRANSITIONS[parcel.status];
-    if (!allowed.includes(input.status)) {
+  private assertTransition(current: ParcelStatus, next: ParcelStatus) {
+    const allowed = VALID_TRANSITIONS[current];
+    if (!allowed.includes(next)) {
       throw new BadRequestException(
-        `No se puede pasar de "${parcel.status}" a "${input.status}". ` +
+        `No se puede pasar de "${current}" a "${next}". ` +
           `Transiciones válidas: ${allowed.join(', ') || 'ninguna'}`,
       );
     }
+  }
+
+  private async transitionTo(
+    parcelId: string,
+    newStatus: ParcelStatus,
+    usuarioId: string | undefined,
+    note?: string,
+    extraData: Record<string, unknown> = {},
+  ): Promise<Parcel> {
+    const parcel = await this.findOne(parcelId);
+    this.assertTransition(parcel.status, newStatus);
 
     const deliveredAt =
-      input.status === ParcelStatus.ENTREGADO ? new Date() : undefined;
+      newStatus === ParcelStatus.ENTREGADO ? new Date() : undefined;
 
     const updated = await this.prisma.parcel.update({
       where: { id: parcel.id },
       data: {
-        status: input.status,
+        status: newStatus,
         ...(deliveredAt ? { deliveredAt } : {}),
+        ...extraData,
         events: {
           create: {
-            status: input.status,
-            note: input.note,
+            status: newStatus,
+            note: note ?? null,
             usuarioId: usuarioId ?? null,
           },
         },
@@ -225,6 +238,222 @@ export class ParcelsService {
     });
 
     return this.toEntity(updated);
+  }
+
+  private async appendOperationalEvent(
+    parcelId: string,
+    currentStatus: ParcelStatus,
+    usuarioId: string | undefined,
+    note: string,
+    extraData: Record<string, unknown> = {},
+  ): Promise<Parcel> {
+    await this.findOne(parcelId);
+
+    const updated = await this.prisma.parcel.update({
+      where: { id: parcelId },
+      data: {
+        ...extraData,
+        events: {
+          create: {
+            status: currentStatus,
+            note,
+            usuarioId: usuarioId ?? null,
+          },
+        },
+      },
+      include: { events: { orderBy: { createdAt: 'asc' } } },
+    });
+
+    return this.toEntity(updated);
+  }
+
+  async updateStatus(
+    input: UpdateParcelStatusInput,
+    usuarioId?: string,
+  ): Promise<Parcel> {
+    return this.transitionTo(
+      input.id,
+      input.status,
+      usuarioId,
+      input.note,
+    );
+  }
+
+  // ─── Bodega (Fase 2 / 3) ─────────────────────────────────
+
+  /** Marca encomienda como clasificada (sigue en RECEPCIONADO). */
+  async clasificarEncomienda(
+    parcelId: string,
+    usuarioId?: string,
+    note?: string,
+  ): Promise<Parcel> {
+    const parcel = await this.findOne(parcelId);
+    if (parcel.status !== ParcelStatus.RECEPCIONADO) {
+      throw new BadRequestException(
+        `Solo se pueden clasificar encomiendas en RECEPCIONADO. Estado actual: "${parcel.status}"`,
+      );
+    }
+
+    return this.appendOperationalEvent(
+      parcelId,
+      ParcelStatus.RECEPCIONADO,
+      usuarioId,
+      note ?? 'Clasificada en bodega',
+    );
+  }
+
+  /**
+   * Asigna encomienda a un bus registrado (Fase 3).
+   * Valida ruta, capacidad y crea registro en parcel_bus_assignments.
+   */
+  async asignarEncomiendaABus(
+    input: AsignarEncomiendaBusInput,
+    usuarioId?: string,
+  ): Promise<Parcel> {
+    const parcel = await this.findOne(input.parcelId);
+    if (parcel.status !== ParcelStatus.RECEPCIONADO) {
+      throw new BadRequestException(
+        `Solo se puede asignar bus en RECEPCIONADO. Estado actual: "${parcel.status}"`,
+      );
+    }
+
+    const bus = await this.busesService.findOneOrThrow(input.busId);
+    if (bus.routeCode !== parcel.routeCode) {
+      throw new BadRequestException(
+        `La ruta del bus (${bus.routeCode}) no coincide con la de la encomienda (${parcel.routeCode})`,
+      );
+    }
+
+    await this.busesService.assertCapacity(bus.id, bus.capacidad);
+
+    await this.prisma.parcelBusAssignment.updateMany({
+      where: { parcelId: input.parcelId, isActive: true },
+      data: { isActive: false },
+    });
+
+    await this.prisma.parcelBusAssignment.create({
+      data: { parcelId: input.parcelId, busId: bus.id },
+    });
+
+    const note =
+      input.note ?? `Asignada a ${bus.flota} · placa ${bus.placa}`;
+
+    return this.appendOperationalEvent(
+      input.parcelId,
+      ParcelStatus.RECEPCIONADO,
+      usuarioId,
+      note,
+      {
+        assignedBusId: bus.id,
+        assignedBusPlaca: bus.placa,
+        assignedBusFlota: bus.flota,
+      },
+    );
+  }
+
+  /**
+   * Asignación manual por placa (compat. Fase 2).
+   * Si la placa existe en BD, delega a asignarEncomiendaABus.
+   */
+  async asignarBus(input: AsignarBusInput, usuarioId?: string): Promise<Parcel> {
+    const busRow = await this.prisma.bus.findUnique({
+      where: { placa: input.busPlaca.trim() },
+    });
+
+    if (busRow) {
+      return this.asignarEncomiendaABus(
+        {
+          parcelId: input.parcelId,
+          busId: busRow.id,
+          note: input.note,
+        },
+        usuarioId,
+      );
+    }
+
+    const parcel = await this.findOne(input.parcelId);
+    if (parcel.status !== ParcelStatus.RECEPCIONADO) {
+      throw new BadRequestException(
+        `Solo se puede asignar bus en RECEPCIONADO. Estado actual: "${parcel.status}"`,
+      );
+    }
+
+    const flota = input.busFlota?.trim() || 'Sin flota';
+    const note =
+      input.note ??
+      `Asignada a ${flota} · placa ${input.busPlaca}`;
+
+    return this.appendOperationalEvent(
+      input.parcelId,
+      ParcelStatus.RECEPCIONADO,
+      usuarioId,
+      note,
+      {
+        assignedBusPlaca: input.busPlaca,
+        assignedBusFlota: flota,
+      },
+    );
+  }
+
+  /** Carga en bus → EN_TRANSITO (requiere bus asignado). */
+  async registrarCarga(
+    parcelId: string,
+    usuarioId?: string,
+    note?: string,
+  ): Promise<Parcel> {
+    const parcel = await this.findOne(parcelId);
+
+    if (!parcel.assignedBusId && !parcel.assignedBusPlaca) {
+      throw new BadRequestException(
+        'Debe asignar un bus a la encomienda antes de registrar la carga',
+      );
+    }
+
+    const busLabel =
+      parcel.assignedBusFlota && parcel.assignedBusPlaca
+        ? `${parcel.assignedBusFlota} · ${parcel.assignedBusPlaca}`
+        : 'bus no especificado';
+
+    const updated = await this.transitionTo(
+      parcelId,
+      ParcelStatus.EN_TRANSITO,
+      usuarioId,
+      note ?? `Cargada en ${busLabel}`,
+    );
+
+    await this.busesService.markAssignmentLoaded(parcelId);
+    return updated;
+  }
+
+  /** Descarga en destino → EN_DESTINO */
+  async registrarDescarga(
+    parcelId: string,
+    usuarioId?: string,
+    note?: string,
+  ): Promise<Parcel> {
+    const updated = await this.transitionTo(
+      parcelId,
+      ParcelStatus.EN_DESTINO,
+      usuarioId,
+      note ?? 'Descargada en terminal de destino',
+    );
+
+    await this.busesService.markAssignmentUnloaded(parcelId);
+    return updated;
+  }
+
+  /** Disponible para retiro en ventanilla → DISPONIBLE */
+  async marcarDisponible(
+    parcelId: string,
+    usuarioId?: string,
+    note?: string,
+  ): Promise<Parcel> {
+    return this.transitionTo(
+      parcelId,
+      ParcelStatus.DISPONIBLE,
+      usuarioId,
+      note ?? 'Disponible para retiro en ventanilla',
+    );
   }
 
   async confirmarRetiro(

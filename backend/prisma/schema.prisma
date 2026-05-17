@@ -23,10 +23,18 @@ enum ParcelStatus {
   CANCELADO
 }
 
+enum BusEstado {
+  CARGANDO
+  LISTO
+  EN_RUTA
+  INACTIVO
+}
+
 model Usuario {
   id            String         @id @default(uuid()) @db.Uuid
   nombre        String
   email         String         @unique
+  telefono      String?
   passwordHash  String
   rol           Rol            @default(CLIENTE)
   activo        Boolean        @default(true)
@@ -70,6 +78,12 @@ model Parcel {
   // Status
   status             ParcelStatus  @default(REGISTRADO)
 
+  // Bodega — asignación a bus
+  assignedBusId      String?       @db.Uuid
+  assignedBus        Bus?          @relation(fields: [assignedBusId], references: [id], onDelete: SetNull)
+  assignedBusPlaca   String?
+  assignedBusFlota   String?
+
   // Timestamps
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -77,8 +91,58 @@ model Parcel {
 
   // Relations
   events             ParcelEvent[]
+  busAssignments     ParcelBusAssignment[]
 
   @@map("parcels")
+}
+
+model Bus {
+  id               String                @id @default(uuid()) @db.Uuid
+  placa            String                @unique
+  modelo           String?
+  flota            String
+  routeCode        String
+  routeLabel       String
+  capacidad        Int                   @default(30)
+  estado           BusEstado             @default(CARGANDO)
+  activo           Boolean               @default(true)
+  salidaProgramada String?
+  conductor        String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  parcels          Parcel[]
+  assignments      ParcelBusAssignment[]
+  trackingEvents   BusTrackingEvent[]
+
+  @@map("buses")
+}
+
+model ParcelBusAssignment {
+  id         String    @id @default(uuid()) @db.Uuid
+  parcelId   String    @db.Uuid
+  busId      String    @db.Uuid
+  parcel     Parcel    @relation(fields: [parcelId], references: [id], onDelete: Cascade)
+  bus        Bus       @relation(fields: [busId], references: [id], onDelete: Cascade)
+  assignedAt DateTime  @default(now())
+  loadedAt   DateTime?
+  unloadedAt DateTime?
+  isActive   Boolean   @default(true)
+
+  @@index([parcelId, isActive])
+  @@map("parcel_bus_assignments")
+}
+
+model BusTrackingEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  busId      String   @db.Uuid
+  bus        Bus      @relation(fields: [busId], references: [id], onDelete: Cascade)
+  lat        Float
+  lng        Float
+  velocidad  Float?
+  recordedAt DateTime @default(now())
+
+  @@index([busId, recordedAt])
+  @@map("bus_tracking_events")
 }
 
 model ParcelEvent {
@@ -92,4 +156,4 @@ model ParcelEvent {
   createdAt   DateTime     @default(now())
 
   @@map("parcel_events")
-}
+}
