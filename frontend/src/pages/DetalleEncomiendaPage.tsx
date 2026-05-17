@@ -44,7 +44,7 @@ const ESTADO_CONFIG: Record<string, { label: string; className: string }> = {
 };
 
 export default function DetalleEncomiendaPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id: _id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   // TODO: Replace with real query using id

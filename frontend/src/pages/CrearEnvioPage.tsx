@@ -29,7 +29,6 @@ export default function CrearEnvioPage() {
   const [destEmail, setDestEmail] = useState('');
 
   // Package data
-  const [descripcion, setDescripcion] = useState('');
   const [contenido, setContenido] = useState('');
   const [pesoDeclarado, setPesoDeclarado] = useState('');
   const [ruta, setRuta] = useState('SCZ-PQA');
@@ -125,7 +124,7 @@ export default function CrearEnvioPage() {
 
       <div className="envio-container">
         {/* Progress stepper */}
-        {step !== 'confirmacion' || !codigoGenerado ? (
+        {step !== 'confirmacion' || !parcelCreado ? (
           <div className="envio-stepper">
             {allSteps.map((s, i) => (
               <div key={s.key} className={`envio-stepper__step ${i <= currentIdx ? 'envio-stepper__step--active' : ''} ${i < currentIdx ? 'envio-stepper__step--done' : ''}`}>
