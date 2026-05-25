@@ -268,3 +268,10 @@ export const GET_REPORTE_ENCOMIENDAS = gql`
     }
   }
 `;
+
+export const GENERAR_ETIQUETA = gql`
+  query GenerarEtiqueta($parcelId: String!) {
+    generarEtiqueta(parcelId: $parcelId)
+  }
+`;
+

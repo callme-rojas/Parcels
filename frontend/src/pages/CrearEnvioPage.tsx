@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery } from '@apollo/client/react';
 import { useAuthStore } from '../stores/authStore';
 import {
   Package,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCreateParcel } from '../hooks/useParcel';
+import { GENERAR_ETIQUETA } from '../graphql/queries';
 import type { Parcel } from '../types';
 
 type Step = 'remitente' | 'destinatario' | 'categoria' | 'dimensiones' | 'confirmacion';
@@ -64,6 +66,12 @@ export default function CrearEnvioPage() {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
   const [parcelCreado, setParcelCreado] = useState<Parcel | null>(null);
+
+  // Generar código PDF417 real
+  const { data: etiquetaData, loading: loadingEtiqueta } = useQuery<{ generarEtiqueta: string }>(GENERAR_ETIQUETA, {
+    variables: { parcelId: parcelCreado?.id },
+    skip: !parcelCreado?.id,
+  });
 
   const RUTAS = [
     { value: 'SCZ-PQA', label: 'Santa Cruz → Puerto Quijarro' },
@@ -609,21 +617,23 @@ export default function CrearEnvioPage() {
                 </div>
                 <div className="envio-label__code">{parcelCreado.trackingNumber}</div>
                 
-                {/* CSS Barcode Placeholder (Phase 15 will replace with actual PNG) */}
+                {/* Código PDF417 Real */}
                 <div className="envio-label__barcode">
-                  <div className="envio-label__bars">
-                    {Array.from({ length: 40 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="envio-label__bar"
-                        style={{
-                          height: 30 + Math.random() * 20,
-                          width: Math.random() > 0.5 ? 2 : 3,
-                          background: 'var(--navy-dark)',
-                        }}
-                      />
-                    ))}
-                  </div>
+                  {loadingEtiqueta ? (
+                    <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Loader2 className="spin" size={24} style={{ color: 'var(--navy)' }} />
+                    </div>
+                  ) : etiquetaData?.generarEtiqueta ? (
+                    <img
+                      src={etiquetaData.generarEtiqueta}
+                      alt="PDF417 Barcode"
+                      style={{ maxHeight: 70, maxWidth: '100%', margin: '12px auto', display: 'block' }}
+                    />
+                  ) : (
+                    <div style={{ color: 'var(--danger)', fontSize: 12, padding: 12 }}>
+                      Error al generar código de barra PDF417
+                    </div>
+                  )}
                 </div>
 
                 <div className="envio-label__grid">

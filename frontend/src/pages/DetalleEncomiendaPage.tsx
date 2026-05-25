@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@apollo/client/react';
 import {
   Package, ArrowLeft, MapPin, User, Phone, Mail, Truck,
   Clock, CheckCircle2, FileBarChart, Printer, Copy, Weight,
@@ -11,6 +12,7 @@ import { ESTADO_CONFIG, Rol, EstadoEncomienda } from '../types';
 import type { EstadoEncomienda as EstadoType } from '../types';
 import MapTracking from '../components/map/MapTracking';
 import { useState } from 'react';
+import { GENERAR_ETIQUETA } from '../graphql/queries';
 
 const ESTADO_BADGE: Record<string, { label: string; className: string }> = {
   REGISTRADO:   { label: 'Pre-registrada',         className: 'badge badge--gray' },
@@ -45,7 +47,14 @@ export default function DetalleEncomiendaPage() {
   // Para la acción de confirmar retiro (solicita CI)
   const [showCiModal, setShowCiModal] = useState(false);
   const [ciInput, setCiInput] = useState('');
+  const [showLabelModal, setShowLabelModal] = useState(false);
   const [actionMsg, setActionMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  // Generar código PDF417 real al ver la etiqueta
+  const { data: etiquetaData, loading: loadingEtiqueta } = useQuery<{ generarEtiqueta: string }>(GENERAR_ETIQUETA, {
+    variables: { parcelId: id },
+    skip: !showLabelModal,
+  });
 
   const notify = (text: string, ok = true) => {
     setActionMsg({ ok, text });
@@ -157,7 +166,7 @@ export default function DetalleEncomiendaPage() {
             <button className="btn btn--secondary btn--sm" onClick={() => refetch()} title="Actualizar datos">
               <RefreshCw size={15} />
             </button>
-            <button className="btn btn--secondary btn--sm">
+            <button className="btn btn--secondary btn--sm" onClick={() => setShowLabelModal(true)}>
               <FileBarChart size={15} /> Ver etiqueta
             </button>
             <button className="btn btn--secondary btn--sm" onClick={() => window.print()}>
@@ -449,6 +458,108 @@ export default function DetalleEncomiendaPage() {
               >
                 {confirmando ? <Loader2 size={15} className="spin" /> : <CheckCircle2 size={15} />}
                 Confirmar retiro
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Modal Etiqueta Encomienda ───────────────────────── */}
+      {showLabelModal && (
+        <div className="modal-overlay" onClick={() => setShowLabelModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 450 }}>
+            <div className="modal__header">
+              <h3>Etiqueta de Encomienda</h3>
+              <button className="modal__close" onClick={() => setShowLabelModal(false)}>✕</button>
+            </div>
+            <div className="modal__body" style={{ background: 'var(--bg-page)', padding: '20px 10px' }}>
+              
+              <div className="envio-label" style={{ margin: '0 auto', border: '1px solid var(--border)' }}>
+                <div className="envio-label__header">
+                  <Package size={20} /> <strong>Travell Encomiendas</strong>
+                </div>
+                <div className="envio-label__code">{parcel.trackingNumber}</div>
+                
+                {/* Código PDF417 Real */}
+                <div className="envio-label__barcode">
+                  {loadingEtiqueta ? (
+                    <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Loader2 className="spin" size={24} style={{ color: 'var(--navy)' }} />
+                    </div>
+                  ) : etiquetaData?.generarEtiqueta ? (
+                    <img
+                      src={etiquetaData.generarEtiqueta}
+                      alt="PDF417 Barcode"
+                      style={{ maxHeight: 70, maxWidth: '100%', margin: '12px auto', display: 'block' }}
+                    />
+                  ) : (
+                    <div style={{ color: 'var(--danger)', fontSize: 12, padding: 12 }}>
+                      Error al generar código de barra PDF417
+                    </div>
+                  )}
+                </div>
+
+                <div className="envio-label__grid">
+                  <div>
+                    <span>Remitente</span>
+                    <strong>{parcel.senderName}</strong>
+                  </div>
+                  <div>
+                    <span>Destinatario</span>
+                    <strong>{parcel.recipientName}</strong>
+                  </div>
+                  <div>
+                    <span>Origen → Destino</span>
+                    <strong>
+                      {parcel.originAddress.split(',')[0]} →{' '}
+                      {parcel.destinationAddress.split(',')[0]}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Categoría</span>
+                    <strong>{parcel.categoria || 'Otro'}</strong>
+                  </div>
+                  <div>
+                    <span>Dimensiones</span>
+                    <strong>
+                      {parcel.largoCm && parcel.anchoCm && parcel.altoCm
+                        ? `${parcel.largoCm}x${parcel.anchoCm}x${parcel.altoCm} cm`
+                        : 'No especificado'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Peso</span>
+                    <strong>{parcel.weight} kg</strong>
+                  </div>
+                  <div>
+                    <span>Costo de Envío</span>
+                    <strong style={{ color: 'var(--success)' }}>
+                      {parcel.costoEnvio ? `${parcel.costoEnvio} BOB` : 'Por liquidar'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Estado Pago</span>
+                    <strong
+                      style={{
+                        color:
+                          parcel.estadoPago === 'PAGADO'
+                            ? 'var(--success)'
+                            : 'var(--danger)',
+                      }}
+                    >
+                      {parcel.estadoPago || 'PENDIENTE'}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div className="modal__footer" style={{ justifyContent: 'center', gap: 12 }}>
+              <button className="btn btn--secondary" onClick={() => setShowLabelModal(false)}>
+                Cerrar
+              </button>
+              <button className="btn btn--primary" onClick={() => window.print()}>
+                <Printer size={15} /> Imprimir Etiqueta
               </button>
             </div>
           </div>

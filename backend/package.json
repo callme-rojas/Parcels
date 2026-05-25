@@ -34,6 +34,7 @@
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "bcrypt": "^6.0.0",
+    "bwip-js": "^4.10.1",
     "graphql": "^16.13.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
