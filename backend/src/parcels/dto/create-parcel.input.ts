@@ -1,19 +1,5 @@
-import { InputType, Field, Float, registerEnumType } from '@nestjs/graphql';
-
-export enum CategoriaContenidoInput {
-  DOCUMENTOS   = 'DOCUMENTOS',
-  ROPA         = 'ROPA',
-  ELECTRONICO  = 'ELECTRONICO',
-  ALIMENTOS    = 'ALIMENTOS',
-  HERRAMIENTAS = 'HERRAMIENTAS',
-  MEDICAMENTOS = 'MEDICAMENTOS',
-  OTRO         = 'OTRO',
-}
-
-registerEnumType(CategoriaContenidoInput, {
-  name: 'CategoriaContenido',
-  description: 'Categoría del contenido del paquete',
-});
+import { InputType, Field, Float } from '@nestjs/graphql';
+import { CategoriaContenido } from '@prisma/client';
 
 @InputType({ description: 'Datos para crear una encomienda' })
 export class CreateParcelInput {
@@ -67,8 +53,8 @@ export class CreateParcelInput {
   @Field(() => Float, { nullable: true, description: 'Alto del paquete en cm' })
   altoCm?: number;
 
-  @Field(() => CategoriaContenidoInput, { nullable: true, description: 'Categoría del contenido' })
-  categoria?: CategoriaContenidoInput;
+  @Field(() => CategoriaContenido, { nullable: true, description: 'Categoría del contenido' })
+  categoria?: CategoriaContenido;
 
   @Field({ nullable: true, description: '¿El paquete es frágil?' })
   esFragil?: boolean;

@@ -67,6 +67,17 @@ type BusLocation {
   velocidad: Float
 }
 
+"""Categoría del contenido de la encomienda"""
+enum CategoriaContenido {
+  ALIMENTOS
+  DOCUMENTOS
+  ELECTRONICO
+  HERRAMIENTAS
+  MEDICAMENTOS
+  OTRO
+  ROPA
+}
+
 """Datos para confirmar retiro de encomienda"""
 input ConfirmarRetiroInput {
   """ID de la encomienda a entregar"""
@@ -100,8 +111,23 @@ input CrearUsuarioInput {
 
 """Datos para crear una encomienda"""
 input CreateParcelInput {
+  """Alto del paquete en cm"""
+  altoCm: Float
+
+  """Ancho del paquete en cm"""
+  anchoCm: Float
+
+  """Categoría del contenido"""
+  categoria: CategoriaContenido
+
   """Descripción / contenido del paquete"""
   content: String!
+
+  """¿El paquete es frágil?"""
+  esFragil: Boolean
+
+  """Largo del paquete en cm"""
+  largoCm: Float
 
   """Observaciones o instrucciones especiales"""
   observations: String
@@ -152,6 +178,13 @@ type EncomiendaResumen {
   senderName: String!
   status: ParcelStatus!
   trackingNumber: String!
+}
+
+"""Estado del pago de la encomienda"""
+enum EstadoPago {
+  EXONERADO
+  PAGADO
+  PENDIENTE
 }
 
 """Rango de fechas para indicadores operativos"""
@@ -236,6 +269,12 @@ type Mutation {
 
 """Encomienda / paquete en tránsito"""
 type Parcel {
+  """Alto del paquete en cm"""
+  altoCm: Float
+
+  """Ancho del paquete en cm"""
+  anchoCm: Float
+
   """Flota del bus asignado (bodega)"""
   assignedBusFlota: String
 
@@ -245,8 +284,14 @@ type Parcel {
   """Placa del bus asignado (bodega)"""
   assignedBusPlaca: String
 
+  """Categoría del contenido"""
+  categoria: CategoriaContenido
+
   """Descripción / contenido del paquete"""
   content: String!
+
+  """Costo total del envío"""
+  costoEnvio: Float
   createdAt: DateTime!
   deliveredAt: DateTime
 
@@ -254,8 +299,17 @@ type Parcel {
   destinationAddress: String!
   destinationLat: Float!
   destinationLng: Float!
+
+  """¿El paquete es frágil?"""
+  esFragil: Boolean!
+
+  """Estado del pago de la encomienda"""
+  estadoPago: EstadoPago!
   events: [ParcelEvent!]
   id: ID!
+
+  """Largo del paquete en cm"""
+  largoCm: Float
 
   """Observaciones adicionales"""
   observations: String
@@ -264,6 +318,9 @@ type Parcel {
   originAddress: String!
   originLat: Float!
   originLng: Float!
+
+  """Fecha y hora en que se realizó el pago"""
+  pagadoEn: DateTime
 
   """CI del destinatario (para verificar entrega)"""
   recipientCi: String!
@@ -351,6 +408,12 @@ type Query {
 
   """Buses activos en estado cargando/listo para asignar encomiendas"""
   busesDisponibles(routeCode: String): [Bus!]!
+
+  """Calcular costo estimado de envío según dimensiones, peso y ruta"""
+  calcularCostoEnvio(altoCm: Float, anchoCm: Float, esFragil: Boolean, largoCm: Float, routeCode: String!, weight: Float!): Float!
+
+  """Generar código de barra PDF417 en base64 para una encomienda"""
+  generarEtiqueta(parcelId: String!): String!
 
   """KPIs agregados por período (default últimos 30 días)"""
   indicadoresOperativos(filter: IndicadoresFilterInput): IndicadoresOperativos!
