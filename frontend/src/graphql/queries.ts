@@ -154,6 +154,18 @@ export const GET_ULTIMA_UBICACION_BUS = gql`
   }
 `;
 
+export const GET_UBICACION_BUS_POR_ENCOMIENDA = gql`
+  query UbicacionBusPorEncomienda($parcelId: ID!) {
+    ubicacionBusPorEncomienda(parcelId: $parcelId) {
+      busId
+      lat
+      lng
+      velocidad
+      recordedAt
+    }
+  }
+`;
+
 export const GET_RESUMEN_DASHBOARD = gql`
   query ResumenDashboard {
     resumenDashboard {

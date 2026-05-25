@@ -1,64 +1,237 @@
-import { useState } from 'react';
-import { Package, Search, MapPin, Clock, ArrowRight, Truck, ScanBarcode } from 'lucide-react';
-import type { EstadoEncomienda } from '../types';
+import { useState, useEffect, useRef } from 'react';
+import {
+  Package, Search, Clock, ScanBarcode, CheckCircle2,
+  MapPin, Loader2, AlertCircle,
+} from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { useLazyQuery } from '@apollo/client/react';
+import { GET_PARCEL_BY_TRACKING } from '../graphql/queries';
+import { useBusLocation } from '../hooks/useBusLocation';
+import { ESTADO_CONFIG } from '../types';
+import type { Parcel } from '../types';
+import MapTracking from '../components/map/MapTracking';
 
-// Mock result for demonstration
-const MOCK_RESULT = {
-  codigo: 'EX-2026-SCZ-0048217',
-  estado: 'EN_TRANSITO' as EstadoEncomienda,
-  remitente: { nombre: 'Rosa Méndez S.', ciudad: 'Santa Cruz' },
-  destinatario: { nombre: 'Juan C. Rojas V.', ciudad: 'Puerto Quijarro' },
-  ruta: 'Santa Cruz → Puerto Quijarro',
-  bus: 'Flota 18 · Placa 2845-KCN',
-  pesoReal: '3.3 kg',
-  eta: '14:50 · hoy',
-  eventos: [
-    { estado: 'Registrada en línea', detalle: 'Por Rosa Méndez · canal web', fecha: '12 mar · 11:42', completed: true },
-    { estado: 'Recibida en taquilla SCZ', detalle: 'Carla Gutiérrez · Vent. 6 · Recibo 45821', fecha: '12 mar · 11:58', completed: true },
-    { estado: 'Cargada al Bus #18', detalle: 'Manifiesto MNF-0312 · Andén 3', fecha: '12 mar · 13:05', completed: true },
-    { estado: 'Despacho oficial', detalle: 'SCZ → PQA · Conductor J. Suárez', fecha: '12 mar · 13:30', completed: true },
-    { estado: 'En tránsito · Pailón', detalle: 'Punto GPS recibido · 87 km/h', fecha: '12 mar · 16:52', completed: false, current: true },
-    { estado: 'Arribo a terminal Pto. Quijarro', detalle: 'Estimado 14:50 del 13 mar', fecha: '—', completed: false },
-    { estado: 'Disponible en ventanilla', detalle: 'Notificación SMS al destinatario', fecha: '—', completed: false },
-    { estado: 'Entregada', detalle: 'Confirmación con CI del destinatario', fecha: '—', completed: false },
-  ],
-  paradas: ['Santa Cruz', 'Cotoca', 'Pailón', 'San José', 'Roboré', 'Pto. Quijarro'],
-  busPosition: 3, // index of current stop
-  stats: { distancia: '312 km / 651 km', tiempo: '3h 22m', proximaParada: 'San José Chiquitos', sync: 'Activa · 12 s' },
-};
+// ── Helpers ────────────────────────────────────────────────────
+function fmt(iso?: string | null) {
+  if (!iso) return '—';
+  return new Intl.DateTimeFormat('es-BO', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+  }).format(new Date(iso));
+}
 
 const estadoBadge: Record<string, { label: string; className: string }> = {
-  REGISTRADO: { label: 'Pre-registrada', className: 'badge badge--gray' },
-  RECEPCIONADO: { label: 'Recibida en taquilla', className: 'badge badge--blue' },
-  EN_TRANSITO: { label: 'En tránsito', className: 'badge badge--amber' },
-  EN_DESTINO: { label: 'En destino', className: 'badge badge--blue' },
-  DISPONIBLE: { label: 'Disponible para retiro', className: 'badge badge--emerald' },
-  ENTREGADO: { label: 'Entregada', className: 'badge badge--green' },
+  REGISTRADO:   { label: 'Pre-registrada',         className: 'badge badge--gray' },
+  RECEPCIONADO: { label: 'Recibida en taquilla',   className: 'badge badge--cyan' },
+  EN_TRANSITO:  { label: 'En tránsito',            className: 'badge badge--amber' },
+  EN_DESTINO:   { label: 'En destino',             className: 'badge badge--purple' },
+  DISPONIBLE:   { label: 'Disponible para retiro', className: 'badge badge--emerald' },
+  ENTREGADO:    { label: 'Entregada',              className: 'badge badge--green' },
+  CANCELADO:    { label: 'Cancelada',              className: 'badge badge--red' },
 };
 
+// ── Componente de resultado de rastreo ─────────────────────────
+function ResultCard({ parcel }: { parcel: Parcel }) {
+  const badge = estadoBadge[parcel.status] ?? { label: parcel.status, className: 'badge' };
+  const events = parcel.events ?? [];
+  const isEnTransito = parcel.status === 'EN_TRANSITO';
+
+  const { location: busLocation } = useBusLocation(
+    isEnTransito ? parcel.id : undefined,
+    30_000,
+  );
+
+  const showMap = ['EN_TRANSITO', 'EN_DESTINO', 'DISPONIBLE', 'ENTREGADO'].includes(parcel.status);
+
+  return (
+    <>
+      {/* ── Tarjeta de resultado ──────────────────────────── */}
+      <div className="rastreo-result">
+        <div className="rastreo-result__header">
+          <div>
+            <span style={{ fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+              Resultado
+            </span>
+            <div className="rastreo-result__code">{parcel.trackingNumber}</div>
+          </div>
+          <span className={badge.className}>
+            <span className="badge__dot" /> {badge.label}
+          </span>
+        </div>
+
+        <div className="rastreo-result__grid">
+          <div>
+            <span className="rastreo-result__label">Remitente</span>
+            <span className="rastreo-result__value">{parcel.senderName}</span>
+          </div>
+          <div>
+            <span className="rastreo-result__label">Destinatario</span>
+            <span className="rastreo-result__value">{parcel.recipientName}</span>
+          </div>
+          <div>
+            <span className="rastreo-result__label">Origen</span>
+            <span className="rastreo-result__value">{parcel.originAddress.split(',')[0]}</span>
+          </div>
+          <div>
+            <span className="rastreo-result__label">Destino</span>
+            <span className="rastreo-result__value">{parcel.destinationAddress.split(',')[0]}</span>
+          </div>
+          <div>
+            <span className="rastreo-result__label">Peso</span>
+            <span className="rastreo-result__value">{parcel.weight} kg</span>
+          </div>
+          <div>
+            <span className="rastreo-result__label">Registrada</span>
+            <span className="rastreo-result__value">{fmt(parcel.createdAt)}</span>
+          </div>
+          {parcel.assignedBusPlaca && (
+            <div>
+              <span className="rastreo-result__label">Bus asignado</span>
+              <span className="rastreo-result__value">
+                {parcel.assignedBusFlota} · {parcel.assignedBusPlaca}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Mapa Mapbox ──────────────────────────────────── */}
+      {showMap && (
+        <section className="rastreo-timeline-section" style={{ gap: 16 }}>
+          <div className="rastreo-info-panel" style={{ padding: 0, overflow: 'hidden', borderRadius: 10 }}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-color)' }}>
+              <h3 style={{ margin: 0, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <MapPin size={15} /> Rastreo de ruta
+              </h3>
+              {busLocation && (
+                <span style={{ fontSize: 11, color: '#16A34A', marginTop: 4, display: 'block' }}>
+                  ● GPS actualizado: {fmt(busLocation.recordedAt)}
+                  {busLocation.velocidad ? ` · ${busLocation.velocidad} km/h` : ''}
+                </span>
+              )}
+              {!busLocation && isEnTransito && (
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                  Sin datos GPS disponibles — se actualizará automáticamente
+                </span>
+              )}
+            </div>
+            <MapTracking
+              originLat={parcel.originLat}
+              originLng={parcel.originLng}
+              originLabel={`Origen: ${parcel.originAddress}`}
+              destinationLat={parcel.destinationLat}
+              destinationLng={parcel.destinationLng}
+              destinationLabel={`Destino: ${parcel.destinationAddress}`}
+              busLat={busLocation?.lat}
+              busLng={busLocation?.lng}
+              busLabel={`Bus · ${parcel.assignedBusFlota ?? ''} ${parcel.assignedBusPlaca ?? ''}`.trim()}
+              height={340}
+            />
+          </div>
+
+          {/* ── Timeline ────────────────────────────────── */}
+          <div className="rastreo-timeline-panel">
+            <h3>Historial de eventos</h3>
+            {events.length === 0 ? (
+              <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Sin eventos registrados.</p>
+            ) : (
+              <div className="rastreo-timeline">
+                {events.map((ev, i) => {
+                  const isCurrent = i === events.length - 1;
+                  const isDone = !isCurrent;
+                  const evBadge = estadoBadge[ev.status];
+                  return (
+                    <div
+                      key={ev.id}
+                      className={`rastreo-timeline__item ${isDone ? 'rastreo-timeline__item--done' : ''} ${isCurrent ? 'rastreo-timeline__item--current' : ''}`}
+                    >
+                      <div className="rastreo-timeline__dot">
+                        {isDone && <CheckCircle2 size={10} style={{ color: 'white' }} />}
+                      </div>
+                      <div className="rastreo-timeline__content">
+                        <strong>{evBadge?.label ?? ev.status}</strong>
+                        {ev.note && (
+                          <span className="rastreo-timeline__detail">{ev.note}</span>
+                        )}
+                      </div>
+                      <span className="rastreo-timeline__date">{fmt(ev.createdAt)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ── Timeline solo (sin mapa, si no está en tránsito) ─ */}
+      {!showMap && events.length > 0 && (
+        <section className="rastreo-timeline-section">
+          <div className="rastreo-timeline-panel" style={{ maxWidth: 700 }}>
+            <h3>Historial de eventos</h3>
+            <div className="rastreo-timeline">
+              {events.map((ev, i) => {
+                const isCurrent = i === events.length - 1;
+                const isDone = !isCurrent;
+                return (
+                  <div
+                    key={ev.id}
+                    className={`rastreo-timeline__item ${isDone ? 'rastreo-timeline__item--done' : ''} ${isCurrent ? 'rastreo-timeline__item--current' : ''}`}
+                  >
+                    <div className="rastreo-timeline__dot">
+                      {isDone && <CheckCircle2 size={10} style={{ color: 'white' }} />}
+                    </div>
+                    <div className="rastreo-timeline__content">
+                      <strong>{estadoBadge[ev.status]?.label ?? ev.status}</strong>
+                      {ev.note && <span className="rastreo-timeline__detail">{ev.note}</span>}
+                    </div>
+                    <span className="rastreo-timeline__date">{fmt(ev.createdAt)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
+
+// ── Página principal de rastreo ────────────────────────────────
 export default function RastreoPublicoPage() {
-  const [query, setQuery] = useState('');
-  const [result, setResult] = useState<typeof MOCK_RESULT | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get('code') ?? '');
   const [searched, setSearched] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSearch = async (e?: React.FormEvent) => {
+  const [fetchParcel, { data, loading, error }] = useLazyQuery<{
+    parcelByTracking: Parcel;
+  }>(GET_PARCEL_BY_TRACKING, { fetchPolicy: 'network-only' });
+
+  const result: Parcel | null = data?.parcelByTracking ?? null;
+
+  // Auto-search si hay code en la URL
+  useEffect(() => {
+    const code = searchParams.get('code');
+    if (code) {
+      setQuery(code);
+      setSearched(true);
+      fetchParcel({ variables: { trackingNumber: code } });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!query.trim()) return;
-
-    setLoading(true);
+    const trimmed = query.trim();
+    if (!trimmed) return;
     setSearched(true);
-    // TODO: Replace with real GraphQL query
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    setResult(MOCK_RESULT);
-    setLoading(false);
+    setSearchParams({ code: trimmed });
+    fetchParcel({ variables: { trackingNumber: trimmed } });
   };
-
-  const badge = result ? estadoBadge[result.estado] : null;
 
   return (
     <div className="rastreo-page">
-      {/* ─── Public Navbar ─────────────────────────── */}
+      {/* ── Public Navbar ────────────────────────────────── */}
       <nav className="rastreo-nav">
         <div className="rastreo-nav__left">
           <div className="rastreo-nav__logo">
@@ -73,7 +246,7 @@ export default function RastreoPublicoPage() {
         </div>
       </nav>
 
-      {/* ─── Hero Section ──────────────────────────── */}
+      {/* ── Hero Section ─────────────────────────────────── */}
       <section className="rastreo-hero">
         <div className="rastreo-hero__content">
           <h1 className="rastreo-hero__title">
@@ -87,120 +260,68 @@ export default function RastreoPublicoPage() {
 
           <form className="rastreo-search" onSubmit={handleSearch}>
             <input
+              ref={inputRef}
               type="text"
               className="rastreo-search__input"
-              placeholder="EX-2026-SCZ-0048217"
+              placeholder="Ej: EX-2026-SCZ-0048217"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                if (searched) setSearched(false);
+              }}
               autoFocus
             />
-            <button type="submit" className="btn btn--primary">
+            <button type="submit" className="btn btn--primary" disabled={loading}>
+              {loading ? <Loader2 size={16} className="spin" /> : <Search size={16} />}
               Rastrear envío
             </button>
-            <button type="button" className="btn btn--secondary" title="Escanear código PDF417">
+            <button
+              type="button"
+              className="btn btn--secondary"
+              title="Escanear código PDF417"
+              onClick={() => inputRef.current?.focus()}
+            >
               <ScanBarcode size={18} /> Escanear
             </button>
           </form>
 
           <div className="rastreo-hero__stats">
-            <span><span className="rastreo-hero__dot rastreo-hero__dot--green" /> 14 buses activos</span>
-            <span><span className="rastreo-hero__dot rastreo-hero__dot--amber" /> 328 encomiendas en tránsito</span>
-            <span><span className="rastreo-hero__dot rastreo-hero__dot--blue" /> Última sync · 12:04</span>
+            <span><span className="rastreo-hero__dot rastreo-hero__dot--green" /> Sistema activo</span>
+            <span><span className="rastreo-hero__dot rastreo-hero__dot--blue" /> Rastreo en tiempo real</span>
           </div>
         </div>
 
-        {/* ─── Result Card (if searched) ──────────── */}
+        {/* ── Loading ────────────────────────────────────── */}
         {loading && (
           <div className="rastreo-result rastreo-result--loading">
-            <div className="spin" style={{ margin: 'auto' }}><Search size={32} /></div>
-            <p style={{ textAlign: 'center', color: '#6B7280', marginTop: 12 }}>Buscando encomienda...</p>
+            <Loader2 size={36} className="spin" style={{ margin: 'auto', display: 'block' }} />
+            <p style={{ textAlign: 'center', color: '#6B7280', marginTop: 12 }}>
+              Buscando encomienda...
+            </p>
           </div>
         )}
 
-        {result && !loading && badge && (
-          <div className="rastreo-result">
-            <div className="rastreo-result__header">
-              <div>
-                <span style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>Resultado</span>
-                <div className="rastreo-result__code">{result.codigo}</div>
-              </div>
-              <span className={badge.className}>
-                <span className="badge__dot" /> {badge.label}
-              </span>
-            </div>
-
-            <div className="rastreo-result__grid">
-              <div>
-                <span className="rastreo-result__label">Origen</span>
-                <span className="rastreo-result__value">{result.remitente.ciudad}</span>
-              </div>
-              <div>
-                <span className="rastreo-result__label">Destino</span>
-                <span className="rastreo-result__value">{result.destinatario.ciudad}</span>
-              </div>
-              <div>
-                <span className="rastreo-result__label">Bus</span>
-                <span className="rastreo-result__value">{result.bus}</span>
-              </div>
-              <div>
-                <span className="rastreo-result__label">ETA</span>
-                <span className="rastreo-result__value">{result.eta}</span>
-              </div>
-            </div>
-
-            {/* Route progress */}
-            <div className="rastreo-route">
-              {result.paradas.map((parada, i) => (
-                <div key={parada} className={`rastreo-route__stop ${i <= result.busPosition ? 'rastreo-route__stop--passed' : ''} ${i === result.busPosition ? 'rastreo-route__stop--current' : ''}`}>
-                  <div className="rastreo-route__dot" />
-                  {i < result.paradas.length - 1 && <div className="rastreo-route__line" />}
-                  <span className="rastreo-route__name">{parada}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {searched && !loading && !result && (
+        {/* ── Not found ─────────────────────────────────── */}
+        {!loading && searched && error && (
           <div className="rastreo-result" style={{ textAlign: 'center', padding: 40 }}>
-            <Package size={40} style={{ color: '#9CA3AF' }} />
-            <p style={{ color: '#6B7280', marginTop: 8 }}>No se encontró ninguna encomienda con ese código.</p>
+            <AlertCircle size={40} style={{ color: '#EF4444', margin: '0 auto 12px', display: 'block' }} />
+            <p style={{ color: '#6B7280' }}>
+              No se encontró ninguna encomienda con el código <strong>{query}</strong>.
+            </p>
+            <p style={{ color: '#9CA3AF', fontSize: 12, marginTop: 4 }}>
+              Verifica que el número sea correcto.
+            </p>
           </div>
         )}
       </section>
 
-      {/* ─── Timeline (if result) ──────────────────── */}
-      {result && !loading && (
-        <section className="rastreo-timeline-section">
-          <div className="rastreo-info-panel">
-            <h3>Resumen del envío</h3>
-            <div className="rastreo-info-grid">
-              <div><span className="rastreo-result__label">De</span><strong>{result.remitente.nombre}</strong><br /><span style={{ fontSize: 12, color: '#6B7280' }}>{result.remitente.ciudad}</span></div>
-              <div><span className="rastreo-result__label">Para</span><strong>{result.destinatario.nombre}</strong><br /><span style={{ fontSize: 12, color: '#6B7280' }}>{result.destinatario.ciudad}</span></div>
-              <div><span className="rastreo-result__label">Peso real</span><strong>{result.pesoReal}</strong></div>
-            </div>
-          </div>
-
-          <div className="rastreo-timeline-panel">
-            <h3>Historial de eventos</h3>
-            <div className="rastreo-timeline">
-              {result.eventos.map((ev, i) => (
-                <div key={i} className={`rastreo-timeline__item ${ev.completed ? 'rastreo-timeline__item--done' : ''} ${ev.current ? 'rastreo-timeline__item--current' : ''}`}>
-                  <div className="rastreo-timeline__dot" />
-                  <div className="rastreo-timeline__content">
-                    <strong>{ev.estado}</strong>
-                    <span className="rastreo-timeline__detail">{ev.detalle}</span>
-                  </div>
-                  <span className="rastreo-timeline__date">{ev.fecha}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+      {/* ── Result ─────────────────────────────────────────── */}
+      {!loading && result && (
+        <ResultCard parcel={result} />
       )}
 
-      {/* ─── Steps (when no result) ────────────────── */}
-      {!result && !loading && (
+      {/* ── Steps (cuando no hay resultado) ─────────────── */}
+      {!result && !loading && !searched && (
         <section className="rastreo-steps">
           <div className="rastreo-step">
             <h3>1. Registra en línea</h3>
@@ -212,29 +333,31 @@ export default function RastreoPublicoPage() {
           </div>
           <div className="rastreo-step">
             <h3>3. Sigue al bus</h3>
-            <p>Visualiza la ubicación del bus en el mapa y recibe alertas cuando tu paquete esté disponible para retiro.</p>
+            <p>Visualiza la ubicación del bus en el mapa y recibe actualizaciones cuando tu paquete esté disponible para retiro.</p>
           </div>
         </section>
       )}
 
-      {/* ─── Stats bar (if result) ────────────────── */}
-      {result && !loading && (
+      {/* ── Stats bar (si hay resultado) ─────────────────── */}
+      {!loading && result && (
         <section className="rastreo-stats-bar">
           <div className="rastreo-stat">
-            <span className="rastreo-stat__label">Distancia recorrida</span>
-            <span className="rastreo-stat__value">{result.stats.distancia}</span>
+            <span className="rastreo-stat__label">Contenido</span>
+            <span className="rastreo-stat__value">{result.content}</span>
           </div>
           <div className="rastreo-stat">
-            <span className="rastreo-stat__label">Tiempo en ruta</span>
-            <span className="rastreo-stat__value">{result.stats.tiempo}</span>
+            <span className="rastreo-stat__label">Peso declarado</span>
+            <span className="rastreo-stat__value">{result.weight} kg</span>
           </div>
           <div className="rastreo-stat">
-            <span className="rastreo-stat__label">Próxima parada</span>
-            <span className="rastreo-stat__value">{result.stats.proximaParada}</span>
+            <span className="rastreo-stat__label">Ruta</span>
+            <span className="rastreo-stat__value">{result.routeCode}</span>
           </div>
           <div className="rastreo-stat">
-            <span className="rastreo-stat__label">Sincronización</span>
-            <span className="rastreo-stat__value" style={{ color: '#16A34A' }}>● {result.stats.sync}</span>
+            <span className="rastreo-stat__label">Eventos</span>
+            <span className="rastreo-stat__value" style={{ color: '#C9A84C' }}>
+              <Clock size={13} style={{ verticalAlign: 'middle' }} /> {result.events?.length ?? 0} registros
+            </span>
           </div>
         </section>
       )}
