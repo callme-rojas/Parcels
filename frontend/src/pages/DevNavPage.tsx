@@ -46,6 +46,7 @@ const ALL_ROUTES: { section: string; color: string; routes: RouteItem[] }[] = [
       { path: '/usuarios', label: 'Usuarios', icon: <Users size={18} />, requiresRole: [Rol.ADMINISTRADOR], description: 'CRUD de usuarios del sistema' },
       { path: '/reportes', label: 'Reportes', icon: <BarChart3 size={18} />, requiresRole: [Rol.ADMINISTRADOR], description: 'Reportes por ruta/fecha/estado', cu: 'CU-15' },
       { path: '/seguimiento', label: 'Seguimiento GPS', icon: <MapPin size={18} />, requiresRole: [Rol.ADMINISTRADOR], description: 'Mapa en tiempo real', cu: 'CU-17, CU-18' },
+      { path: '/buses', label: 'Buses y Flotas', icon: <Truck size={18} />, requiresRole: [Rol.ADMINISTRADOR, Rol.BODEGA, Rol.TAQUILLA], description: 'Gestión de buses, flotas y salidas', cu: 'CU-10, CU-11' },
     ],
   },
   {
@@ -73,27 +74,34 @@ const ALL_ROUTES: { section: string; color: string; routes: RouteItem[] }[] = [
   },
 ];
 
+const DEV_USERS_CREDENTIALS: Record<string, { email: string; pass: string }> = {
+  admin: { email: 'admin@travell.test', pass: 'admin123' },
+  taquilla: { email: 'taquilla@travell.test', pass: 'taquilla123' },
+  bodega: { email: 'bodega@travell.test', pass: 'bodega123' },
+  cliente: { email: 'cliente@travell.test', pass: 'cliente123' },
+};
+
 export default function DevNavPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
 
-  const quickLogin = (role: string) => {
-    const devUser = DEV_USERS[role];
-    // Directly set state in Zustand — bypasses GraphQL for dev purposes
-    useAuthStore.setState({
-      user: devUser,
-      token: `dev-token-${role}-${Date.now()}`,
-      isAuthenticated: true,
-    });
+  const quickLogin = async (role: string) => {
+    const creds = DEV_USERS_CREDENTIALS[role];
+    if (!creds) return;
+    try {
+      await useAuthStore.getState().login(creds.email, creds.pass);
+    } catch (e: any) {
+      console.error('Error logging in via DevNav quick login:', e);
+      alert('Error en quickLogin: ' + (e.message || 'Asegúrese de haber ejecutado el seed de la base de datos.'));
+    }
   };
 
-  const goTo = (path: string, requiredRole?: Rol[]) => {
+  const goTo = async (path: string, requiredRole?: Rol[]) => {
     if (requiredRole && requiredRole.length > 0) {
       const currentRole = useAuthStore.getState().user?.rol;
       if (!currentRole || !requiredRole.includes(currentRole)) {
-        // Auto-login as the first required role
         const roleKey = requiredRole[0].toLowerCase() === 'administrador' ? 'admin' : requiredRole[0].toLowerCase();
-        quickLogin(roleKey);
+        await quickLogin(roleKey);
       }
     }
     navigate(path);

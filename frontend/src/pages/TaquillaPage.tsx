@@ -8,6 +8,7 @@ import {
 import { useParcels, useUpdateParcelStatus, useConfirmarRetiro } from '../hooks/useParcel';
 import { EstadoEncomienda } from '../types';
 import type { Parcel } from '../types';
+import BarcodeScannerModal from '../components/BarcodeScannerModal';
 
 type TabKey = 'recepcion' | 'retiro' | 'cola';
 
@@ -39,12 +40,49 @@ export default function TaquillaPage() {
   const [searchCode, setSearchCode] = useState('');
   const [scannedParcel, setScannedParcel] = useState<Parcel | null>(null);
   const [scanResult, setScanResult] = useState<'success' | 'error' | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   // States for Retiro
   const [retiroCI, setRetiroCI] = useState('');
   const [retiroResult, setRetiroResult] = useState<'success' | 'error' | 'ci_error' | null>(null);
   const [selectedRetiro, setSelectedRetiro] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState('');
+
+  const handleScanSuccess = (text: string) => {
+    setShowScanner(false);
+    let tracking = text.trim();
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed && parsed.t) {
+        tracking = parsed.t;
+      }
+    } catch (e) {
+      // not a JSON, use raw text
+    }
+    setSearchCode(tracking);
+
+    const found = pendientes.find(p =>
+      p.trackingNumber.toLowerCase() === tracking.toLowerCase()
+    );
+    if (found) {
+      setScannedParcel(found);
+      setScanResult('success');
+    } else {
+      // Also try searching in disponibles just in case they are in the withdrawal tab
+      const foundDisp = disponibles.find(p =>
+        p.trackingNumber.toLowerCase() === tracking.toLowerCase()
+      );
+      if (foundDisp) {
+        setSelectedRetiro(foundDisp.id);
+        setActiveTab('retiro');
+        setRetiroResult(null);
+        setRetiroCI('');
+      } else {
+        setScannedParcel(null);
+        setScanResult('error');
+      }
+    }
+  };
 
   // ─── Queries ──────────────────────────────────────────────
   const { parcels: pendientes, loading: loadingPendientes, refetch: rPend } =
@@ -166,6 +204,9 @@ export default function TaquillaPage() {
                   />
                   <button className="btn btn--primary btn--sm" onClick={handleScan}>
                     <Search size={14} /> Buscar
+                  </button>
+                  <button className="btn btn--secondary btn--sm" onClick={() => setShowScanner(true)}>
+                    <ScanLine size={14} /> Escanear
                   </button>
                 </div>
 
@@ -395,6 +436,11 @@ export default function TaquillaPage() {
         </div>
       )}
 
+      <BarcodeScannerModal
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScanSuccess={handleScanSuccess}
+      />
     </div>
   );
 }

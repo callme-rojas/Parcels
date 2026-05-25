@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
 import {
   Warehouse, Truck, PackageCheck, PackageX, Package,
-  CheckCircle2, AlertCircle, Loader2, MapPin
+  CheckCircle2, AlertCircle, Loader2, MapPin, ScanBarcode, X
 } from 'lucide-react';
 import { EstadoEncomienda } from '../types';
 import type { Parcel, Bus } from '../types';
@@ -14,6 +14,7 @@ import {
   REGISTRAR_DESCARGA,
   MARCAR_DISPONIBLE,
 } from '../graphql/mutations';
+import BarcodeScannerModal from '../components/BarcodeScannerModal';
 
 type BodegaTab = 'despacho' | 'transito' | 'llegada';
 
@@ -22,6 +23,9 @@ export default function BodegaPage() {
   const [actionMsg, setActionMsg] = useState('');
   const [asignandoId, setAsignandoId] = useState<string | null>(null);
   const [selectedBus, setSelectedBus] = useState<string>('');
+  const [showScanner, setShowScanner] = useState(false);
+  const [scannedParcel, setScannedParcel] = useState<Parcel | null>(null);
+  const [showScanActionModal, setShowScanActionModal] = useState(false);
 
   // ─── Queries ──────────────────────────────────────────────
   const { data: qRecepcionado, loading: lRec, refetch: rRec } = useQuery<{ parcels: Parcel[] }>(GET_PARCELS, {
@@ -58,6 +62,37 @@ export default function BodegaPage() {
   const notify = (msg: string, isError = false) => {
     setActionMsg(`${isError ? '❌' : '✅'} ${msg}`);
     setTimeout(() => setActionMsg(''), 5000);
+  };
+
+  const handleScanSuccess = (text: string) => {
+    setShowScanner(false);
+    let tracking = text.trim();
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed && parsed.t) {
+        tracking = parsed.t;
+      }
+    } catch (e) {
+      // not a JSON, use raw text
+    }
+
+    const found = [...recepcionados, ...enTransito, ...enDestino].find(
+      p => p.trackingNumber.toLowerCase() === tracking.toLowerCase()
+    );
+
+    if (found) {
+      setScannedParcel(found);
+      setShowScanActionModal(true);
+      if (found.status === EstadoEncomienda.RECEPCIONADO) {
+        setActiveTab('despacho');
+      } else if (found.status === EstadoEncomienda.EN_TRANSITO) {
+        setActiveTab('transito');
+      } else if (found.status === EstadoEncomienda.EN_DESTINO) {
+        setActiveTab('llegada');
+      }
+    } else {
+      notify(`No se encontró la encomienda "${tracking}" en las listas de bodega.`, true);
+    }
   };
 
   const handleClasificar = async (id: string) => {
@@ -152,6 +187,13 @@ export default function BodegaPage() {
         <button className={`taq-tab ${activeTab === 'llegada' ? 'taq-tab--active' : ''}`} onClick={() => setActiveTab('llegada')}>
           <Package size={16} /> Destino: Disponible Retiro
           <span className="enc-tab__count">{enDestino.length}</span>
+        </button>
+        <button
+          className="btn btn--gold btn--sm"
+          style={{ marginLeft: 'auto', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}
+          onClick={() => setShowScanner(true)}
+        >
+          <ScanBarcode size={14} /> Escanear Etiqueta
         </button>
       </div>
 
@@ -349,6 +391,169 @@ export default function BodegaPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScannerModal
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScanSuccess={handleScanSuccess}
+      />
+
+      {/* Scan Action Modal */}
+      {showScanActionModal && scannedParcel && (
+        <div className="modal-overlay" onClick={() => setShowScanActionModal(false)} style={{ zIndex: 999 }}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 500 }}>
+            <div className="modal__header">
+              <h3>Paquete Escaneado</h3>
+              <button className="modal__close" onClick={() => setShowScanActionModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal__body" style={{ padding: 20 }}>
+              <div className="detail-card__header" style={{ marginBottom: 16 }}>
+                <div>
+                  <span style={{ fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase' }}>Código de Encomienda</span>
+                  <div className="data-table__code" style={{ fontSize: 18, marginTop: 4 }}>{scannedParcel.trackingNumber}</div>
+                </div>
+                <span className={`badge ${
+                  scannedParcel.status === 'RECEPCIONADO' ? 'badge--cyan' :
+                  scannedParcel.status === 'EN_TRANSITO' ? 'badge--amber' :
+                  scannedParcel.status === 'EN_DESTINO' ? 'badge--purple' :
+                  scannedParcel.status === 'DISPONIBLE' ? 'badge--emerald' :
+                  scannedParcel.status === 'ENTREGADO' ? 'badge--green' :
+                  'badge--gray'
+                }`}>
+                  {scannedParcel.status}
+                </span>
+              </div>
+
+              <div style={{ background: 'var(--bg-secondary)', padding: 14, borderRadius: 8, marginBottom: 20 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13 }}>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: 11 }}>Contenido</span>
+                    <strong>{scannedParcel.content}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: 11 }}>Peso</span>
+                    <strong>{scannedParcel.weight} kg</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: 11 }}>Remitente</span>
+                    <strong>{scannedParcel.senderName}</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: 11 }}>Destinatario</span>
+                    <strong>{scannedParcel.recipientName}</strong>
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <span style={{ color: 'var(--text-muted)', display: 'block', fontSize: 11 }}>Ruta</span>
+                    <strong>{scannedParcel.routeCode} ({scannedParcel.originAddress.split(',')[0]} → {scannedParcel.destinationAddress.split(',')[0]})</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {scannedParcel.status === 'RECEPCIONADO' && (
+                  <>
+                    <button
+                      className="btn btn--secondary btn--full"
+                      onClick={() => {
+                        handleClasificar(scannedParcel.id);
+                        setShowScanActionModal(false);
+                      }}
+                    >
+                      <Warehouse size={16} /> Clasificar en Bodega
+                    </button>
+
+                    {scannedParcel.assignedBusId ? (
+                      <button
+                        className="btn btn--primary btn--full"
+                        onClick={() => {
+                          handleCarga(scannedParcel.id);
+                          setShowScanActionModal(false);
+                        }}
+                      >
+                        <PackageCheck size={16} /> Cargar en Bus ({scannedParcel.assignedBusPlaca})
+                      </button>
+                    ) : (
+                      <div className="form-group" style={{ margin: 0, padding: '10px 0' }}>
+                        <label className="form-label" style={{ fontSize: 12 }}>Asignar Bus para Despacho</label>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <select
+                            className="form-input"
+                            style={{ flex: 1 }}
+                            value={selectedBus}
+                            onChange={(e) => setSelectedBus(e.target.value)}
+                          >
+                            <option value="">Seleccionar bus...</option>
+                            {buses.filter(b => b.routeCode === scannedParcel.routeCode && b.activo).map(b => (
+                              <option key={b.id} value={b.id}>
+                                {b.flota} · {b.placa} ({b.capacidad - b.cargados} disp.)
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            className="btn btn--primary"
+                            disabled={!selectedBus}
+                            onClick={() => {
+                              handleAsignarBus(scannedParcel.id);
+                              setShowScanActionModal(false);
+                            }}
+                          >
+                            Asignar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {scannedParcel.status === 'EN_TRANSITO' && (
+                  <button
+                    className="btn btn--primary btn--full"
+                    onClick={() => {
+                      handleDescarga(scannedParcel.id);
+                      setShowScanActionModal(false);
+                    }}
+                  >
+                    <PackageX size={16} /> Registrar Descarga (Llegada a Bodega)
+                  </button>
+                )}
+
+                {scannedParcel.status === 'EN_DESTINO' && (
+                  <button
+                    className="btn btn--gold btn--full"
+                    onClick={() => {
+                      handleDisponible(scannedParcel.id);
+                      setShowScanActionModal(false);
+                    }}
+                  >
+                    <CheckCircle2 size={16} /> Marcar Disponible para Retiro
+                  </button>
+                )}
+
+                {(scannedParcel.status === 'REGISTRADO' ||
+                  scannedParcel.status === 'DISPONIBLE' ||
+                  scannedParcel.status === 'ENTREGADO' ||
+                  scannedParcel.status === 'CANCELADO') && (
+                  <div style={{ textAlign: 'center', padding: '12px', background: 'rgba(229, 161, 0, 0.1)', border: '1px solid var(--gold)', borderRadius: 6, color: 'var(--gold)', fontSize: 13 }}>
+                    <AlertCircle size={18} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+                    {scannedParcel.status === 'REGISTRADO' && 'Este paquete aún no ha sido recepcionado en la taquilla de origen.'}
+                    {scannedParcel.status === 'DISPONIBLE' && 'Este paquete ya está disponible para retiro del cliente en taquilla.'}
+                    {scannedParcel.status === 'ENTREGADO' && 'Este paquete ya fue entregado al destinatario final.'}
+                    {scannedParcel.status === 'CANCELADO' && 'Esta encomienda ha sido cancelada.'}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="modal__footer">
+              <button className="btn btn--secondary btn--full" onClick={() => setShowScanActionModal(false)}>
+                Cerrar
+              </button>
             </div>
           </div>
         </div>

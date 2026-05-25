@@ -10,6 +10,7 @@ import { useBusLocation } from '../hooks/useBusLocation';
 import { ESTADO_CONFIG } from '../types';
 import type { Parcel } from '../types';
 import MapTracking from '../components/map/MapTracking';
+import BarcodeScannerModal from '../components/BarcodeScannerModal';
 
 // ── Helpers ────────────────────────────────────────────────────
 function fmt(iso?: string | null) {
@@ -201,6 +202,7 @@ export default function RastreoPublicoPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('code') ?? '');
   const [searched, setSearched] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [fetchParcel, { data, loading, error }] = useLazyQuery<{
@@ -208,6 +210,23 @@ export default function RastreoPublicoPage() {
   }>(GET_PARCEL_BY_TRACKING, { fetchPolicy: 'network-only' });
 
   const result: Parcel | null = data?.parcelByTracking ?? null;
+
+  const handleScanSuccess = (text: string) => {
+    setShowScanner(false);
+    let tracking = text.trim();
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed && parsed.t) {
+        tracking = parsed.t;
+      }
+    } catch (e) {
+      // not a JSON, use raw text
+    }
+    setQuery(tracking);
+    setSearched(true);
+    setSearchParams({ code: tracking });
+    fetchParcel({ variables: { trackingNumber: tracking } });
+  };
 
   // Auto-search si hay code en la URL
   useEffect(() => {
@@ -279,7 +298,7 @@ export default function RastreoPublicoPage() {
               type="button"
               className="btn btn--secondary"
               title="Escanear código PDF417"
-              onClick={() => inputRef.current?.focus()}
+              onClick={() => setShowScanner(true)}
             >
               <ScanBarcode size={18} /> Escanear
             </button>
@@ -361,6 +380,13 @@ export default function RastreoPublicoPage() {
           </div>
         </section>
       )}
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScannerModal
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScanSuccess={handleScanSuccess}
+      />
     </div>
   );
 }

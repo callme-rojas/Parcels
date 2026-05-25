@@ -3228,3 +3228,15 @@ select.form-input {
   display: flex;
   justify-content: space-between;
 }
+
+@keyframes scanner-laser {
+  0% {
+    top: 12%;
+  }
+  50% {
+    top: 88%;
+  }
+  100% {
+    top: 12%;
+  }
+}
