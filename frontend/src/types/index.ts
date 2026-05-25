@@ -41,6 +41,28 @@ export interface ParcelEvent {
   createdAt: string;
 }
 
+// ─── Categoría de contenido (Fase 16) ──────────────────────────
+export const CategoriaContenido = {
+  DOCUMENTOS: 'DOCUMENTOS',
+  ROPA: 'ROPA',
+  ELECTRONICO: 'ELECTRONICO',
+  ALIMENTOS: 'ALIMENTOS',
+  HERRAMIENTAS: 'HERRAMIENTAS',
+  MEDICAMENTOS: 'MEDICAMENTOS',
+  OTRO: 'OTRO',
+} as const;
+
+export type CategoriaContenido = typeof CategoriaContenido[keyof typeof CategoriaContenido];
+
+// ─── Estado de Pago (Fase 16) ──────────────────────────────────
+export const EstadoPago = {
+  PENDIENTE: 'PENDIENTE',
+  PAGADO: 'PAGADO',
+  EXONERADO: 'EXONERADO',
+} as const;
+
+export type EstadoPago = typeof EstadoPago[keyof typeof EstadoPago];
+
 // ─── Encomienda principal (alineada con backend Parcel) ───────
 export interface Parcel {
   id: string;
@@ -62,6 +84,18 @@ export interface Parcel {
   content: string;
   weight: number;
   observations?: string;
+
+  // Detalles extendidos del paquete (Fase 16)
+  largoCm?: number;
+  anchoCm?: number;
+  altoCm?: number;
+  categoria?: CategoriaContenido;
+  esFragil: boolean;
+
+  // Costo y pago (Fase 16)
+  costoEnvio?: number;
+  estadoPago: EstadoPago;
+  pagadoEn?: string;
 
   // Asignación a bus
   assignedBusId?: string;
@@ -103,6 +137,13 @@ export interface CreateParcelInput {
   weight: number;
   observations?: string;
   routeCode: string;
+
+  // Detalles extendidos (Fase 16)
+  largoCm?: number;
+  anchoCm?: number;
+  altoCm?: number;
+  categoria?: CategoriaContenido;
+  esFragil?: boolean;
 }
 
 export interface UpdateParcelStatusInput {

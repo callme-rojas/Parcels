@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, ID, Float } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { Parcel } from './entities/parcel.entity';
 import { ParcelsService } from './parcels.service';
@@ -62,6 +62,28 @@ export class ParcelsResolver {
     @Args('trackingNumber') trackingNumber: string,
   ): Promise<Parcel> {
     return this.parcelsService.findByTrackingNumber(trackingNumber);
+  }
+
+  @Query(() => Float, {
+    name: 'calcularCostoEnvio',
+    description: 'Calcular costo estimado de envío según dimensiones, peso y ruta',
+  })
+  calcularCostoEnvio(
+    @Args('routeCode') routeCode: string,
+    @Args('weight') weight: number,
+    @Args('largoCm', { type: () => Float, nullable: true }) largoCm?: number,
+    @Args('anchoCm', { type: () => Float, nullable: true }) anchoCm?: number,
+    @Args('altoCm', { type: () => Float, nullable: true }) altoCm?: number,
+    @Args('esFragil', { type: () => Boolean, nullable: true }) esFragil?: boolean,
+  ): number {
+    return this.parcelsService.calcularCostoEnvioInterno(
+      routeCode,
+      weight,
+      largoCm,
+      anchoCm,
+      altoCm,
+      esFragil,
+    );
   }
 
   // ─── MUTATIONS ────────────────────────────────────────────────────

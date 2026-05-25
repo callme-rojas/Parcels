@@ -5,6 +5,7 @@ import {
   Float,
   registerEnumType,
 } from '@nestjs/graphql';
+import { CategoriaContenido, EstadoPago } from '@prisma/client';
 
 export enum ParcelStatus {
   REGISTRADO = 'REGISTRADO',
@@ -19,6 +20,16 @@ export enum ParcelStatus {
 registerEnumType(ParcelStatus, {
   name: 'ParcelStatus',
   description: 'Estado operativo de la encomienda',
+});
+
+registerEnumType(CategoriaContenido, {
+  name: 'CategoriaContenido',
+  description: 'Categoría del contenido de la encomienda',
+});
+
+registerEnumType(EstadoPago, {
+  name: 'EstadoPago',
+  description: 'Estado del pago de la encomienda',
 });
 
 @ObjectType({ description: 'Evento de estado de una encomienda' })
@@ -130,6 +141,32 @@ export class Parcel {
 
   @Field({ nullable: true })
   deliveredAt?: Date;
+
+  // ── Detalles extendidos del paquete (Fase 16) ────────────
+  @Field(() => Float, { nullable: true, description: 'Largo del paquete en cm' })
+  largoCm?: number;
+
+  @Field(() => Float, { nullable: true, description: 'Ancho del paquete en cm' })
+  anchoCm?: number;
+
+  @Field(() => Float, { nullable: true, description: 'Alto del paquete en cm' })
+  altoCm?: number;
+
+  @Field(() => CategoriaContenido, { nullable: true, description: 'Categoría del contenido' })
+  categoria?: CategoriaContenido;
+
+  @Field({ description: '¿El paquete es frágil?' })
+  esFragil!: boolean;
+
+  // ── Costo y pago (Fase 17/16) ────────────────────────────
+  @Field(() => Float, { nullable: true, description: 'Costo total del envío' })
+  costoEnvio?: number;
+
+  @Field(() => EstadoPago, { description: 'Estado del pago de la encomienda' })
+  estadoPago!: EstadoPago;
+
+  @Field({ nullable: true, description: 'Fecha y hora en que se realizó el pago' })
+  pagadoEn?: Date;
 
   // Events
   @Field(() => [ParcelEvent], { nullable: true })

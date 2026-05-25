@@ -148,6 +148,43 @@ export class ParcelsService {
 
   // ─── Mutations ──────────────────────────────────────────
 
+  calcularCostoEnvioInterno(
+    routeCode: string,
+    weight: number,
+    largoCm?: number,
+    anchoCm?: number,
+    altoCm?: number,
+    esFragil?: boolean,
+  ): number {
+    let basePrice = 30;
+    let ratePerKg = 3;
+
+    if (routeCode === 'SCZ-PQA' || routeCode === 'PQA-SCZ') {
+      basePrice = 50;
+      ratePerKg = 4;
+    } else if (routeCode === 'SCZ-SJC') {
+      basePrice = 30;
+      ratePerKg = 3;
+    } else if (routeCode === 'SCZ-ROB') {
+      basePrice = 40;
+      ratePerKg = 3.5;
+    }
+
+    const volWeight =
+      largoCm && anchoCm && altoCm
+        ? (largoCm * anchoCm * altoCm) / 5000
+        : 0;
+
+    const chargeableWeight = Math.max(weight, volWeight);
+    let total = basePrice + chargeableWeight * ratePerKg;
+
+    if (esFragil) {
+      total = total * 1.2; // +20% para artículos frágiles
+    }
+
+    return Math.round(total * 100) / 100;
+  }
+
   async create(input: CreateParcelInput, usuarioId?: string): Promise<Parcel> {
     const route = ROUTES[input.routeCode];
     if (!route)
@@ -160,6 +197,15 @@ export class ParcelsService {
     const prefix = input.routeCode.split('-')[0];
     const randomNum = Math.floor(Math.random() * 900000 + 100000);
     const trackingNumber = `EX-${year}-${prefix}-00${randomNum}`;
+
+    const costoEnvio = this.calcularCostoEnvioInterno(
+      input.routeCode,
+      input.weight,
+      input.largoCm,
+      input.anchoCm,
+      input.altoCm,
+      input.esFragil,
+    );
 
     const created = await this.prisma.parcel.create({
       data: {
@@ -183,6 +229,13 @@ export class ParcelsService {
         destinationLat: route.destinationLat,
         destinationLng: route.destinationLng,
         status: ParcelStatus.REGISTRADO,
+        largoCm: input.largoCm ?? null,
+        anchoCm: input.anchoCm ?? null,
+        altoCm: input.altoCm ?? null,
+        categoria: input.categoria ? (input.categoria as any) : null,
+        esFragil: input.esFragil ?? false,
+        costoEnvio,
+        estadoPago: 'PENDIENTE',
         events: {
           create: {
             status: ParcelStatus.REGISTRADO,

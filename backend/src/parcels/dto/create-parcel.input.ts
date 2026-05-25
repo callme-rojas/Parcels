@@ -1,4 +1,19 @@
-import { InputType, Field, Float } from '@nestjs/graphql';
+import { InputType, Field, Float, registerEnumType } from '@nestjs/graphql';
+
+export enum CategoriaContenidoInput {
+  DOCUMENTOS   = 'DOCUMENTOS',
+  ROPA         = 'ROPA',
+  ELECTRONICO  = 'ELECTRONICO',
+  ALIMENTOS    = 'ALIMENTOS',
+  HERRAMIENTAS = 'HERRAMIENTAS',
+  MEDICAMENTOS = 'MEDICAMENTOS',
+  OTRO         = 'OTRO',
+}
+
+registerEnumType(CategoriaContenidoInput, {
+  name: 'CategoriaContenido',
+  description: 'Categoría del contenido del paquete',
+});
 
 @InputType({ description: 'Datos para crear una encomienda' })
 export class CreateParcelInput {
@@ -41,4 +56,20 @@ export class CreateParcelInput {
   // Route — si se envía routeCode el backend infiere origen/destino
   @Field({ description: 'Código de ruta (ej. SCZ-PQA, PQA-SCZ, SCZ-SJC, SCZ-ROB)' })
   routeCode!: string;
+
+  // ── Detalles extendidos del paquete (Fase 16) ────────────
+  @Field(() => Float, { nullable: true, description: 'Largo del paquete en cm' })
+  largoCm?: number;
+
+  @Field(() => Float, { nullable: true, description: 'Ancho del paquete en cm' })
+  anchoCm?: number;
+
+  @Field(() => Float, { nullable: true, description: 'Alto del paquete en cm' })
+  altoCm?: number;
+
+  @Field(() => CategoriaContenidoInput, { nullable: true, description: 'Categoría del contenido' })
+  categoria?: CategoriaContenidoInput;
+
+  @Field({ nullable: true, description: '¿El paquete es frágil?' })
+  esFragil?: boolean;
 }

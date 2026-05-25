@@ -28,6 +28,14 @@ export const PARCEL_BASE_FIELDS = gql`
     assignedBusId
     assignedBusPlaca
     assignedBusFlota
+    largoCm
+    anchoCm
+    altoCm
+    categoria
+    esFragil
+    costoEnvio
+    estadoPago
+    pagadoEn
     createdAt
     updatedAt
     deliveredAt
@@ -79,6 +87,27 @@ export const GET_PARCEL_BY_TRACKING = gql`
     }
   }
   ${PARCEL_WITH_EVENTS}
+`;
+
+/** Calcular costo estimado de envío */
+export const CALCULAR_COSTO_ENVIO = gql`
+  query CalcularCostoEnvio(
+    $routeCode: String!
+    $weight: Float!
+    $largoCm: Float
+    $anchoCm: Float
+    $altoCm: Float
+    $esFragil: Boolean
+  ) {
+    calcularCostoEnvio(
+      routeCode: $routeCode
+      weight: $weight
+      largoCm: $largoCm
+      anchoCm: $anchoCm
+      altoCm: $altoCm
+      esFragil: $esFragil
+    )
+  }
 `;
 
 // ─── User Queries ──────────────────────────────────────────────

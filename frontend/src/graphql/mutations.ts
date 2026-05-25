@@ -48,6 +48,13 @@ export const CREATE_PARCEL_MUTATION = gql`
       content
       weight
       status
+      largoCm
+      anchoCm
+      altoCm
+      categoria
+      esFragil
+      costoEnvio
+      estadoPago
       createdAt
     }
   }
@@ -67,6 +74,13 @@ export const CREATE_PARCEL_AUTH_MUTATION = gql`
       content
       weight
       status
+      largoCm
+      anchoCm
+      altoCm
+      categoria
+      esFragil
+      costoEnvio
+      estadoPago
       createdAt
     }
   }

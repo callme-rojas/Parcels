@@ -53,6 +53,18 @@ model Parcel {
   events             ParcelEvent[]
   assignedBus        Bus?                  @relation(fields: [assignedBusId], references: [id])
 
+  // ── Detalles extendidos del paquete (Fase 16) ──────────
+  largoCm            Float?                // longitud en cm
+  anchoCm            Float?                // ancho en cm
+  altoCm             Float?                // alto en cm
+  categoria          CategoriaContenido?   // tipo de contenido
+  esFragil           Boolean               @default(false)
+
+  // ── Costo y pago (preparado para Fase 17) ──────────────
+  costoEnvio         Float?                // calculado automáticamente al crear
+  estadoPago         EstadoPago            @default(PENDIENTE)
+  pagadoEn           DateTime?
+
   @@map("parcels")
 }
 
@@ -142,4 +154,20 @@ enum BusEstado {
   LISTO
   EN_RUTA
   INACTIVO
+}
+
+enum CategoriaContenido {
+  DOCUMENTOS
+  ROPA
+  ELECTRONICO
+  ALIMENTOS
+  HERRAMIENTAS
+  MEDICAMENTOS
+  OTRO
+}
+
+enum EstadoPago {
+  PENDIENTE
+  PAGADO
+  EXONERADO
 }
