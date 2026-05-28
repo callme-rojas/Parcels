@@ -71,6 +71,45 @@ export const TOGGLE_USUARIO_ACTIVO_MUTATION = gql`
   }
 `;
 
+export const CREAR_SUCURSAL_MUTATION = gql`
+  mutation CrearSucursal($input: CrearSucursalInput!) {
+    crearSucursal(input: $input) {
+      id
+      nombre
+      ciudad
+      direccion
+      telefono
+      activa
+    }
+  }
+`;
+
+export const ACTUALIZAR_SUCURSAL_MUTATION = gql`
+  mutation ActualizarSucursal($input: ActualizarSucursalInput!) {
+    actualizarSucursal(input: $input) {
+      id
+      nombre
+      ciudad
+      direccion
+      telefono
+      activa
+    }
+  }
+`;
+
+export const TOGGLE_SUCURSAL_ACTIVA_MUTATION = gql`
+  mutation ToggleSucursalActiva($id: ID!, $activa: Boolean!) {
+    toggleSucursalActiva(id: $id, activa: $activa) {
+      id
+      nombre
+      ciudad
+      direccion
+      telefono
+      activa
+    }
+  }
+`;
+
 // ─── Parcel Mutations ──────────────────────────────────────────
 
 /** Crear encomienda (sin auth — flujo público o con cuenta) */

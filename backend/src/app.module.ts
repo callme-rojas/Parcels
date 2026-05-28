@@ -10,6 +10,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { EtiquetaModule } from './etiqueta/etiqueta.module';
 import { UsersModule } from './users/users.module';
+import { SucursalesModule } from './sucursales/sucursales.module';
 import type { Request } from 'express';
 
 @Module({
@@ -32,6 +33,7 @@ import type { Request } from 'express';
     ReportsModule,
     EtiquetaModule,
     UsersModule,
+    SucursalesModule,
   ],
 })
 export class AppModule {}

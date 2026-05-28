@@ -2,6 +2,15 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input ActualizarSucursalInput {
+  activa: Boolean
+  ciudad: String
+  direccion: String
+  id: String!
+  nombre: String
+  telefono: String
+}
+
 input ActualizarUsuarioInput {
   activo: Boolean
   email: String
@@ -109,6 +118,13 @@ input CrearBusInput {
   """Etiqueta legible; si no se envía se deriva del routeCode"""
   routeLabel: String
   salidaProgramada: String
+}
+
+input CrearSucursalInput {
+  ciudad: String!
+  direccion: String!
+  nombre: String!
+  telefono: String
 }
 
 input CrearUsuarioInput {
@@ -232,6 +248,9 @@ input LoginInput {
 }
 
 type Mutation {
+  """Actualizar una sucursal existente (solo Admin)"""
+  actualizarSucursal(input: ActualizarSucursalInput!): Sucursal!
+
   """Actualizar datos de un usuario (solo Admin)"""
   actualizarUsuario(input: ActualizarUsuarioInput!): User!
 
@@ -251,6 +270,9 @@ type Mutation {
 
   """Registrar un bus en la flota"""
   crearBus(input: CrearBusInput!): Bus!
+
+  """Registrar una nueva sucursal (solo Admin)"""
+  crearSucursal(input: CrearSucursalInput!): Sucursal!
   crearUsuario(input: CrearUsuarioInput!): User!
 
   """Crear encomienda (pública, sin auth)"""
@@ -275,6 +297,9 @@ type Mutation {
 
   """Eliminar encomienda (solo ADMINISTRADOR)"""
   removeParcel(id: ID!): Boolean!
+
+  """Activar/Desactivar una sucursal (solo Admin)"""
+  toggleSucursalActiva(activa: Boolean!, id: ID!): Sucursal!
 
   """Activar/Desactivar un usuario (solo Admin)"""
   toggleUsuarioActivo(activo: Boolean!, id: String!): User!
@@ -452,6 +477,9 @@ type Query {
   """KPIs del día y últimas encomiendas (panel admin)"""
   resumenDashboard: ResumenDashboard!
 
+  """Listar todas las sucursales"""
+  sucursales: [Sucursal!]!
+
   """Última ubicación del bus asignado a la encomienda (pública)"""
   ubicacionBusPorEncomienda(parcelId: ID!): BusLocation
 
@@ -539,6 +567,15 @@ type RutaConteo {
   routeCode: String!
   routeLabel: String!
   total: Int!
+}
+
+type Sucursal {
+  activa: Boolean!
+  ciudad: String!
+  direccion: String!
+  id: ID!
+  nombre: String!
+  telefono: String
 }
 
 """Actualizar estado de una encomienda"""

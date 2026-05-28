@@ -137,6 +137,19 @@ export const GET_USERS = gql`
   }
 `;
 
+export const GET_SUCURSALES = gql`
+  query GetSucursales {
+    sucursales {
+      id
+      nombre
+      ciudad
+      direccion
+      telefono
+      activa
+    }
+  }
+`;
+
 // ─── Buses Queries ──────────────────────────────────────────
 
 export const GET_BUSES = gql`

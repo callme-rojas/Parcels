@@ -171,3 +171,16 @@ enum EstadoPago {
   PAGADO
   EXONERADO
 }
+
+model Sucursal {
+  id            String   @id @default(uuid()) @db.Uuid
+  nombre        String
+  ciudad        String
+  direccion     String
+  telefono      String?
+  activa        Boolean  @default(true)
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@map("sucursales")
+}

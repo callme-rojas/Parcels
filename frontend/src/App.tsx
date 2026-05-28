@@ -24,6 +24,7 @@ import BodegaPage from './pages/BodegaPage';
 import EncomiendasPage from './pages/EncomiendasPage';
 import SeguimientoPage from './pages/SeguimientoPage';
 import UsuariosPage from './pages/UsuariosPage';
+import SucursalesPage from './pages/SucursalesPage';
 import ReportesPage from './pages/ReportesPage';
 import MisEnviosPage from './pages/MisEnviosPage';
 import DetalleEncomiendaPage from './pages/DetalleEncomiendaPage';
@@ -61,6 +62,7 @@ function AppRoutes() {
           <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR]} />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/usuarios" element={<UsuariosPage />} />
+            <Route path="/sucursales" element={<SucursalesPage />} />
             <Route path="/reportes" element={<ReportesPage />} />
           </Route>
 

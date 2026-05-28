@@ -191,6 +191,31 @@ export interface CrearBusInput {
   salidaProgramada?: string;
 }
 
+export interface Sucursal {
+  id: string;
+  nombre: string;
+  ciudad: string;
+  direccion: string;
+  telefono?: string;
+  activa: boolean;
+}
+
+export interface CrearSucursalInput {
+  nombre: string;
+  ciudad: string;
+  direccion: string;
+  telefono?: string;
+}
+
+export interface ActualizarSucursalInput {
+  id: string;
+  nombre?: string;
+  ciudad?: string;
+  direccion?: string;
+  telefono?: string;
+  activa?: boolean;
+}
+
 // ─── Filtros para listado ─────────────────────────────────────
 export interface ParcelsFilter {
   status?: EstadoEncomienda;
