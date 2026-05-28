@@ -2,6 +2,16 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input ActualizarUsuarioInput {
+  activo: Boolean
+  email: String
+  id: String!
+  nombre: String
+  password: String
+  rol: Rol
+  telefono: String
+}
+
 input AsignarBusInput {
   """Identificador de flota (ej. Flota 18)"""
   busFlota: String
@@ -222,6 +232,9 @@ input LoginInput {
 }
 
 type Mutation {
+  """Actualizar datos de un usuario (solo Admin)"""
+  actualizarUsuario(input: ActualizarUsuarioInput!): User!
+
   """Asignar por placa/flota (legacy; usa bus en BD si la placa existe)"""
   asignarBus(input: AsignarBusInput!): Parcel!
 
@@ -262,6 +275,9 @@ type Mutation {
 
   """Eliminar encomienda (solo ADMINISTRADOR)"""
   removeParcel(id: ID!): Boolean!
+
+  """Activar/Desactivar un usuario (solo Admin)"""
+  toggleUsuarioActivo(activo: Boolean!, id: String!): User!
 
   """Actualizar estado de encomienda (TAQUILLA / BODEGA)"""
   updateParcelStatus(input: UpdateParcelStatusInput!): Parcel!
@@ -441,6 +457,9 @@ type Query {
 
   """Última coordenada GPS registrada del bus"""
   ultimaUbicacionBus(busId: ID!): BusLocation
+
+  """Listar todos los usuarios (solo Admin)"""
+  users: [User!]!
 }
 
 input RegisterClienteInput {

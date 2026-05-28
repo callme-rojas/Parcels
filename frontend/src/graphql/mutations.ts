@@ -32,6 +32,45 @@ export const REGISTER_CLIENT_MUTATION = gql`
   }
 `;
 
+export const CREAR_USUARIO_MUTATION = gql`
+  mutation CrearUsuario($input: CrearUsuarioInput!) {
+    crearUsuario(input: $input) {
+      id
+      nombre
+      email
+      telefono
+      rol
+      activo
+    }
+  }
+`;
+
+export const ACTUALIZAR_USUARIO_MUTATION = gql`
+  mutation ActualizarUsuario($input: ActualizarUsuarioInput!) {
+    actualizarUsuario(input: $input) {
+      id
+      nombre
+      email
+      telefono
+      rol
+      activo
+    }
+  }
+`;
+
+export const TOGGLE_USUARIO_ACTIVO_MUTATION = gql`
+  mutation ToggleUsuarioActivo($id: String!, $activo: Boolean!) {
+    toggleUsuarioActivo(id: $id, activo: $activo) {
+      id
+      nombre
+      email
+      telefono
+      rol
+      activo
+    }
+  }
+`;
+
 // ─── Parcel Mutations ──────────────────────────────────────────
 
 /** Crear encomienda (sin auth — flujo público o con cuenta) */

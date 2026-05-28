@@ -111,12 +111,6 @@ export class AuthService {
     telefono?: string;
     rol: Rol;
   }) {
-    if (input.rol === Rol.CLIENTE) {
-      throw new BadRequestException(
-        'Para clientes usa registerCliente; crearUsuario es para personal',
-      );
-    }
-
     await this.assertEmailNotUsed(input.email);
 
     const passwordHash = await bcrypt.hash(input.password, 10);
