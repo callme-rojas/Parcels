@@ -256,3 +256,21 @@ export const ESTADO_CONFIG: Record<
   [EstadoEncomienda.ENTREGADO]:    { label: 'Entregado',    badgeClass: 'badge--green',   step: 5 },
   [EstadoEncomienda.CANCELADO]:    { label: 'Cancelado',    badgeClass: 'badge--red',     step: -1 },
 };
+
+// ─── Telemetría e Interfaces de Tracking ──────────────────────
+export interface BusLocation {
+  busId: string;
+  lat: number;
+  lng: number;
+  velocidad?: number;
+  recordedAt: string;
+}
+
+export interface RegistrarCoordenadaBusInput {
+  busId: string;
+  lat: number;
+  lng: number;
+  velocidad?: number;
+  recordedAt?: string;
+}
+

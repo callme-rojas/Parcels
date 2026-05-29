@@ -34,6 +34,7 @@ const ALL_ROUTES: { section: string; color: string; routes: RouteItem[] }[] = [
     routes: [
       { path: '/rastreo', label: 'Rastreo Público', icon: <Globe size={18} />, isPublic: true, description: 'Rastrear envío por código', cu: 'CU-03, CU-04' },
       { path: '/enviar', label: 'Enviar Paquete (Guest)', icon: <Send size={18} />, isPublic: true, description: 'Crear envío sin cuenta', cu: 'CU-01, CU-02' },
+      { path: '/chofer', label: 'Simulador Chofer', icon: <Truck size={18} />, isPublic: true, description: 'Panel de chofer (GPS/Offline)', cu: 'CU-17, CU-18' },
       { path: '/login', label: 'Login', icon: <LogIn size={18} />, isPublic: true, description: 'Iniciar sesión' },
       { path: '/registro', label: 'Registro', icon: <UserPlus size={18} />, isPublic: true, description: 'Crear cuenta de usuario' },
       { path: '/ayuda', label: 'Centro de Ayuda', icon: <HelpCircle size={18} />, isPublic: true, description: 'FAQs y documentación del sistema' },

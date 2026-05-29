@@ -14,8 +14,6 @@ import { Rol } from '../users/entities/rol.enum';
 export class BusesResolver {
   constructor(private readonly busesService: BusesService) {}
 
-  @UseGuards(GqlAuthGuard, RolesGuard)
-  @Roles(Rol.BODEGA, Rol.ADMINISTRADOR, Rol.TAQUILLA)
   @Query(() => [Bus], {
     name: 'buses',
     description: 'Listar buses de la flota (filtro opcional por ruta)',
@@ -76,8 +74,6 @@ export class BusesResolver {
     return this.busesService.crearBus(input);
   }
 
-  @UseGuards(GqlAuthGuard, RolesGuard)
-  @Roles(Rol.BODEGA, Rol.ADMINISTRADOR)
   @Mutation(() => BusLocation, {
     description: 'Registrar coordenada GPS del bus (simulación de rastreo)',
   })

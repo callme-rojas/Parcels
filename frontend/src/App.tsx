@@ -13,6 +13,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import RastreoPublicoPage from './pages/RastreoPublicoPage';
 import CrearEnvioPage from './pages/CrearEnvioPage';
+import ChoferPage from './pages/ChoferPage';
 import DevNavPage from './pages/DevNavPage';
 import NotFoundPage from './pages/NotFoundPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
@@ -55,6 +56,7 @@ function AppRoutes() {
       <Route path="/registro" element={<RegisterPage />} />
       <Route path="/rastreo" element={<RastreoPublicoPage />} />
       <Route path="/enviar" element={<CrearEnvioPage />} />
+      <Route path="/chofer" element={<ChoferPage />} />
       <Route path="/dev" element={<DevNavPage />} />
       <Route path="/no-autorizado" element={<UnauthorizedPage />} />
 

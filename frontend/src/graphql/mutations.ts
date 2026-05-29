@@ -281,3 +281,16 @@ export const MARCAR_DISPONIBLE = gql`
     }
   }
 `;
+
+export const REGISTRAR_COORDENADA_MUTATION = gql`
+  mutation RegistrarCoordenadaBus($input: RegistrarCoordenadaBusInput!) {
+    registrarCoordenadaBus(input: $input) {
+      busId
+      lat
+      lng
+      velocidad
+      recordedAt
+    }
+  }
+`;
+

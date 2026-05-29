@@ -13,4 +13,7 @@ export class RegistrarCoordenadaBusInput {
 
   @Field(() => Float, { nullable: true })
   velocidad?: number;
+
+  @Field(() => Date, { nullable: true })
+  recordedAt?: Date;
 }

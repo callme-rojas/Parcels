@@ -156,6 +156,7 @@ export class BusesService {
         lat: input.lat,
         lng: input.lng,
         velocidad: input.velocidad,
+        recordedAt: input.recordedAt ?? new Date(),
       },
     });
 

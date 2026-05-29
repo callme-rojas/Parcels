@@ -510,6 +510,7 @@ input RegistrarCoordenadaBusInput {
   busId: String!
   lat: Float!
   lng: Float!
+  recordedAt: DateTime
   velocidad: Float
 }
 
