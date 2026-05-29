@@ -148,7 +148,6 @@ export class BusesService {
   async registrarCoordenada(
     input: RegistrarCoordenadaBusInput,
   ): Promise<BusLocation> {
-    await this.findOne(input.busId);
 
     const event = await this.prisma.busTrackingEvent.create({
       data: {
