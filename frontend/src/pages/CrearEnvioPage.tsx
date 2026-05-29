@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useMutation } from '@apollo/client/react';
+import { REGISTRAR_PAGO_MUTATION } from '../graphql/mutations';
 import { useAuthStore } from '../stores/authStore';
 import {
   Package,
@@ -66,6 +67,24 @@ export default function CrearEnvioPage() {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
   const [parcelCreado, setParcelCreado] = useState<Parcel | null>(null);
+  const [tipoPago, setTipoPago] = useState<'REMITENTE' | 'DESTINATARIO'>('REMITENTE');
+
+  const [registrarPago, { loading: payingQr }] = useMutation<any>(REGISTRAR_PAGO_MUTATION);
+
+  const handleSimulatePayment = async (id: string) => {
+    try {
+      const { data } = await registrarPago({ variables: { id } });
+      if (data?.registrarPago && parcelCreado) {
+        setParcelCreado({
+          ...parcelCreado,
+          estadoPago: 'PAGADO',
+          pagadoEn: data.registrarPago.pagadoEn,
+        });
+      }
+    } catch (err: any) {
+      alert(`Error al simular pago: ${err.message}`);
+    }
+  };
 
   // Generar código PDF417 real
   const { data: etiquetaData, loading: loadingEtiqueta } = useQuery<{ generarEtiqueta: string }>(GENERAR_ETIQUETA, {
@@ -160,6 +179,7 @@ export default function CrearEnvioPage() {
         altoCm: altoCm ? parseFloat(altoCm) : undefined,
         categoria: categoria as any,
         esFragil,
+        tipoPago,
       });
 
       setParcelCreado(result);
@@ -473,6 +493,33 @@ export default function CrearEnvioPage() {
                   </select>
                 </div>
 
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 600 }}>¿Quién cancela el costo del envío? *</label>
+                  <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+                    <button
+                      type="button"
+                      className={`btn ${tipoPago === 'REMITENTE' ? 'btn--primary' : 'btn--secondary'}`}
+                      style={{ flex: 1, padding: '10px 8px', fontSize: 13, minWidth: 'auto' }}
+                      onClick={() => setTipoPago('REMITENTE')}
+                    >
+                      💵 Remitente (Pago en Origen)
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn ${tipoPago === 'DESTINATARIO' ? 'btn--primary' : 'btn--secondary'}`}
+                      style={{ flex: 1, padding: '10px 8px', fontSize: 13, minWidth: 'auto' }}
+                      onClick={() => setTipoPago('DESTINATARIO')}
+                    >
+                      📦 Destinatario (Al Cobro en Destino)
+                    </button>
+                  </div>
+                  <small style={{ color: 'var(--text-muted)', fontSize: 11, marginTop: 4, display: 'block' }}>
+                    {tipoPago === 'REMITENTE'
+                      ? 'Pagarás de forma virtual mediante QR Simple en el siguiente paso para confirmar tu envío.'
+                      : 'El destinatario deberá pagar el costo total del envío al momento de retirar el paquete.'}
+                  </small>
+                </div>
+
                 <div className="envio-form__row">
                   <div className="form-group">
                     <label className="form-label">Peso Real (kg) *</label>
@@ -675,6 +722,10 @@ export default function CrearEnvioPage() {
                     </strong>
                   </div>
                   <div>
+                    <span>Tipo de Pago</span>
+                    <strong>{parcelCreado.tipoPago === 'REMITENTE' ? 'Prepago (Remitente)' : 'Al Cobro (Destinatario)'}</strong>
+                  </div>
+                  <div>
                     <span>Estado Pago</span>
                     <strong
                       style={{
@@ -689,6 +740,81 @@ export default function CrearEnvioPage() {
                   </div>
                 </div>
               </div>
+
+              {parcelCreado.tipoPago === 'REMITENTE' && parcelCreado.estadoPago === 'PENDIENTE' && (
+                <div className="dashboard-panel animate-fade-in" style={{ maxWidth: 450, margin: '24px auto', padding: 20, border: '1px dashed var(--accent)', background: 'var(--bg-panel)' }}>
+                  <div style={{ textAlign: 'center', marginBottom: 12 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 1 }}>
+                      Simulador de Pago QR Simple
+                    </span>
+                    <h3 style={{ fontSize: 16, color: 'var(--navy)', marginTop: 4, fontWeight: 700 }}>Escanea para Pagar el Envío</h3>
+                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>Simula el flujo de pago inmediato utilizando un código QR estandarizado en Bolivia.</p>
+                  </div>
+                  
+                  <div style={{ background: 'var(--bg-page)', padding: 16, borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, border: '1px solid var(--border)' }}>
+                    <div style={{ background: 'white', padding: 10, borderRadius: 8, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                      <svg width="130" height="130" viewBox="0 0 100 100" style={{ display: 'block' }}>
+                        <rect x="0" y="0" width="100" height="100" fill="white" />
+                        <rect x="5" y="5" width="25" height="25" fill="#1e293b" />
+                        <rect x="9" y="9" width="17" height="17" fill="white" />
+                        <rect x="12" y="12" width="11" height="11" fill="#1e293b" />
+                        
+                        <rect x="70" y="5" width="25" height="25" fill="#1e293b" />
+                        <rect x="74" y="9" width="17" height="17" fill="white" />
+                        <rect x="77" y="12" width="11" height="11" fill="#1e293b" />
+                        
+                        <rect x="5" y="70" width="25" height="25" fill="#1e293b" />
+                        <rect x="9" y="74" width="17" height="17" fill="white" />
+                        <rect x="12" y="77" width="11" height="11" fill="#1e293b" />
+                        
+                        <rect x="42" y="42" width="16" height="16" fill="#1e3a8a" rx="2" />
+                        <circle cx="50" cy="50" r="4" fill="#fbbf24" />
+                        
+                        <rect x="40" y="10" width="8" height="8" fill="#475569" />
+                        <rect x="55" y="15" width="6" height="6" fill="#1e293b" />
+                        <rect x="45" y="25" width="12" height="6" fill="#475569" />
+                        <rect x="10" y="40" width="10" height="6" fill="#1e293b" />
+                        <rect x="25" y="45" width="6" height="12" fill="#475569" />
+                        <rect x="15" y="58" width="12" height="8" fill="#1e293b" />
+                        <rect x="70" y="40" width="15" height="6" fill="#475569" />
+                        <rect x="75" y="50" width="8" height="12" fill="#1e293b" />
+                        <rect x="85" y="65" width="10" height="10" fill="#475569" />
+                        <rect x="40" y="70" width="6" height="14" fill="#1e293b" />
+                        <rect x="52" y="75" width="14" height="6" fill="#475569" />
+                        <rect x="60" y="85" width="12" height="10" fill="#1e293b" />
+                        <rect x="45" y="62" width="8" height="8" fill="#1e293b" />
+                      </svg>
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>Monto: {parcelCreado.costoEnvio?.toFixed(2)} BOB</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Vence en: 01:59 minutos</span>
+                  </div>
+                  
+                  <div style={{ marginTop: 16 }}>
+                    <button
+                      className="btn btn--gold btn--full animate-pulse"
+                      onClick={() => handleSimulatePayment(parcelCreado.id)}
+                      disabled={payingQr}
+                      style={{ gap: 8, minWidth: 'auto' }}
+                    >
+                      {payingQr ? <Loader2 size={16} className="spin" /> : '✓ Simular Pago QR Simple'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {parcelCreado.tipoPago === 'DESTINATARIO' && (
+                <div className="dashboard-panel animate-fade-in" style={{ maxWidth: 450, margin: '24px auto', padding: 16, background: 'rgba(251, 191, 36, 0.05)', border: '1px dashed rgba(251, 191, 36, 0.3)' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{ fontSize: 20 }}>📦</span>
+                    <div style={{ textAlign: 'left' }}>
+                      <h4 style={{ color: 'var(--navy)', fontWeight: 700, fontSize: 14 }}>Envío con Pago al Retiro (Destinatario)</h4>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.4 }}>
+                        Esta encomienda se enviará bajo la modalidad al cobro. El destinatario registrado deberá pagar **{parcelCreado.costoEnvio?.toFixed(2)} BOB** mediante ventanilla o QR en destino para proceder con la entrega del paquete.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="envio-card__actions" style={{ justifyContent: 'center', gap: 12 }}>
                 <button className="btn btn--primary" onClick={() => window.print()}>

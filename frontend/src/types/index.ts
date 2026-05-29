@@ -63,6 +63,14 @@ export const EstadoPago = {
 
 export type EstadoPago = typeof EstadoPago[keyof typeof EstadoPago];
 
+// ─── Tipo de Pago (Fase 15) ──────────────────────────────────
+export const TipoPago = {
+  REMITENTE: 'REMITENTE',
+  DESTINATARIO: 'DESTINATARIO',
+} as const;
+
+export type TipoPago = typeof TipoPago[keyof typeof TipoPago];
+
 // ─── Encomienda principal (alineada con backend Parcel) ───────
 export interface Parcel {
   id: string;
@@ -96,6 +104,7 @@ export interface Parcel {
   costoEnvio?: number;
   estadoPago: EstadoPago;
   pagadoEn?: string;
+  tipoPago: TipoPago;
 
   // Asignación a bus
   assignedBusId?: string;
@@ -144,6 +153,7 @@ export interface CreateParcelInput {
   altoCm?: number;
   categoria?: CategoriaContenido;
   esFragil?: boolean;
+  tipoPago?: TipoPago;
 }
 
 export interface UpdateParcelStatusInput {

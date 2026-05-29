@@ -36,6 +36,7 @@ export const PARCEL_BASE_FIELDS = gql`
     costoEnvio
     estadoPago
     pagadoEn
+    tipoPago
     createdAt
     updatedAt
     deliveredAt

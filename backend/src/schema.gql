@@ -185,6 +185,9 @@ input CreateParcelInput {
   """Teléfono del remitente"""
   senderPhone: String!
 
+  """Tipo de pago (REMITENTE o DESTINATARIO)"""
+  tipoPago: TipoPago
+
   """Peso declarado en kg"""
   weight: Float!
 }
@@ -295,6 +298,9 @@ type Mutation {
   """Registrar descarga en destino → EN_DESTINO"""
   registrarDescarga(input: ParcelActionInput!): Parcel!
 
+  """Registrar/simular pago de una encomienda (Público para Simulación QR)"""
+  registrarPago(id: ID!): Parcel!
+
   """Eliminar encomienda (solo ADMINISTRADOR)"""
   removeParcel(id: ID!): Boolean!
 
@@ -390,6 +396,9 @@ type Parcel {
   """Teléfono del remitente"""
   senderPhone: String!
   status: ParcelStatus!
+
+  """Tipo de pago (REMITENTE o DESTINATARIO)"""
+  tipoPago: TipoPago!
 
   """Número de rastreo único"""
   trackingNumber: String!
@@ -576,6 +585,12 @@ type Sucursal {
   id: ID!
   nombre: String!
   telefono: String
+}
+
+"""Tipo de pago de la encomienda"""
+enum TipoPago {
+  DESTINATARIO
+  REMITENTE
 }
 
 """Actualizar estado de una encomienda"""

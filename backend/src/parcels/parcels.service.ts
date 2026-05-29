@@ -236,6 +236,7 @@ export class ParcelsService {
         esFragil: input.esFragil ?? false,
         costoEnvio,
         estadoPago: 'PENDIENTE',
+        tipoPago: input.tipoPago ?? 'REMITENTE',
         events: {
           create: {
             status: ParcelStatus.REGISTRADO,

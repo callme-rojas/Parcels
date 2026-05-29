@@ -1,5 +1,5 @@
 import { InputType, Field, Float } from '@nestjs/graphql';
-import { CategoriaContenido } from '@prisma/client';
+import { CategoriaContenido, TipoPago } from '@prisma/client';
 
 @InputType({ description: 'Datos para crear una encomienda' })
 export class CreateParcelInput {
@@ -58,4 +58,7 @@ export class CreateParcelInput {
 
   @Field({ nullable: true, description: '¿El paquete es frágil?' })
   esFragil?: boolean;
+
+  @Field(() => TipoPago, { nullable: true, description: 'Tipo de pago (REMITENTE o DESTINATARIO)' })
+  tipoPago?: TipoPago;
 }

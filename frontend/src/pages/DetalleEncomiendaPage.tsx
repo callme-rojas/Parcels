@@ -1,9 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useMutation } from '@apollo/client/react';
+import { REGISTRAR_PAGO_MUTATION } from '../graphql/mutations';
 import {
   Package, ArrowLeft, MapPin, User, Phone, Mail, Truck,
   Clock, CheckCircle2, FileBarChart, Printer, Copy, Weight,
-  Loader2, AlertCircle, RefreshCw,
+  Loader2, AlertCircle, RefreshCw, DollarSign,
 } from 'lucide-react';
 import { useParcel, useUpdateParcelStatus, useConfirmarRetiro } from '../hooks/useParcel';
 import { useBusLocation } from '../hooks/useBusLocation';
@@ -48,7 +49,19 @@ export default function DetalleEncomiendaPage() {
   const [showCiModal, setShowCiModal] = useState(false);
   const [ciInput, setCiInput] = useState('');
   const [showLabelModal, setShowLabelModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [actionMsg, setActionMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const [registrarPago, { loading: pagando }] = useMutation(REGISTRAR_PAGO_MUTATION, {
+    onCompleted: () => {
+      notify('✅ Pago registrado con éxito.');
+      setShowPaymentModal(false);
+      refetch();
+    },
+    onError: (err: any) => {
+      notify(`Error al registrar el pago: ${err.message}`, false);
+    },
+  });
 
   // Generar código PDF417 real al ver la etiqueta
   const { data: etiquetaData, loading: loadingEtiqueta } = useQuery<{ generarEtiqueta: string }>(GENERAR_ETIQUETA, {
@@ -258,6 +271,32 @@ export default function DetalleEncomiendaPage() {
                 <div><span>Entregada</span><strong>{fmt(parcel.deliveredAt)}</strong></div>
               )}
             </div>
+          </div>
+          {/* Pago */}
+          <div className="detalle-card animate-fade-in">
+            <h3 className="detalle-card__title"><DollarSign size={16} /> Información de Pago</h3>
+            <div className="detalle-card__fields">
+              <div><span>Costo Envío</span><strong>{parcel.costoEnvio?.toFixed(2)} BOB</strong></div>
+              <div><span>Tipo de Pago</span><strong>{parcel.tipoPago === 'REMITENTE' ? 'Prepago (Remitente)' : 'Al Cobro (Destinatario)'}</strong></div>
+              <div>
+                <span>Estado Pago</span>
+                <strong style={{ color: parcel.estadoPago === 'PAGADO' ? 'var(--success)' : 'var(--danger)' }}>
+                  {parcel.estadoPago || 'PENDIENTE'}
+                </strong>
+              </div>
+              {parcel.pagadoEn && (
+                <div><span>Pagado el</span><strong>{fmt(parcel.pagadoEn)}</strong></div>
+              )}
+            </div>
+            {parcel.estadoPago === 'PENDIENTE' && (
+              <button
+                className="btn btn--gold btn--full btn--sm"
+                style={{ marginTop: 12, gap: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 'auto' }}
+                onClick={() => setShowPaymentModal(true)}
+              >
+                💳 Simular Pago QR Simple
+              </button>
+            )}
           </div>
 
           {/* Bus asignado */}
@@ -560,6 +599,79 @@ export default function DetalleEncomiendaPage() {
               </button>
               <button className="btn btn--primary" onClick={() => window.print()}>
                 <Printer size={15} /> Imprimir Etiqueta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ─── Modal Pago QR Simulado ───────────────────────── */}
+      {showPaymentModal && (
+        <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div className="modal__header">
+              <h3>Simular Pago QR Simple</h3>
+              <button className="modal__close" onClick={() => setShowPaymentModal(false)}>✕</button>
+            </div>
+            <div className="modal__body" style={{ textAlign: 'center', padding: '24px 16px' }}>
+              <div style={{ marginBottom: 16 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Pasarela de Pago QR
+                </span>
+                <h4 style={{ fontSize: 15, color: 'var(--navy)', marginTop: 4 }}>Escanea el código para procesar tu pago</h4>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                  Utiliza la banca móvil para realizar el pago de la encomienda <strong>{parcel.trackingNumber}</strong>.
+                </p>
+              </div>
+
+              <div style={{ background: 'var(--bg-page)', padding: 16, borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, border: '1px solid var(--border)', width: 'fit-content', margin: '0 auto' }}>
+                <div style={{ background: 'white', padding: 10, borderRadius: 8, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                  <svg width="140" height="140" viewBox="0 0 100 100" style={{ display: 'block' }}>
+                    <rect x="0" y="0" width="100" height="100" fill="white" />
+                    <rect x="5" y="5" width="25" height="25" fill="#1e293b" />
+                    <rect x="9" y="9" width="17" height="17" fill="white" />
+                    <rect x="12" y="12" width="11" height="11" fill="#1e293b" />
+                    
+                    <rect x="70" y="5" width="25" height="25" fill="#1e293b" />
+                    <rect x="74" y="9" width="17" height="17" fill="white" />
+                    <rect x="77" y="12" width="11" height="11" fill="#1e293b" />
+                    
+                    <rect x="5" y="70" width="25" height="25" fill="#1e293b" />
+                    <rect x="9" y="74" width="17" height="17" fill="white" />
+                    <rect x="12" y="77" width="11" height="11" fill="#1e293b" />
+                    
+                    <rect x="42" y="42" width="16" height="16" fill="#1e3a8a" rx="2" />
+                    <circle cx="50" cy="50" r="4" fill="#fbbf24" />
+                    
+                    <rect x="40" y="10" width="8" height="8" fill="#475569" />
+                    <rect x="55" y="15" width="6" height="6" fill="#1e293b" />
+                    <rect x="45" y="25" width="12" height="6" fill="#475569" />
+                    <rect x="10" y="40" width="10" height="6" fill="#1e293b" />
+                    <rect x="25" y="45" width="6" height="12" fill="#475569" />
+                    <rect x="15" y="58" width="12" height="8" fill="#1e293b" />
+                    <rect x="70" y="40" width="15" height="6" fill="#475569" />
+                    <rect x="75" y="50" width="8" height="12" fill="#1e293b" />
+                    <rect x="85" y="65" width="10" height="10" fill="#475569" />
+                    <rect x="40" y="70" width="6" height="14" fill="#1e293b" />
+                    <rect x="52" y="75" width="14" height="6" fill="#475569" />
+                    <rect x="60" y="85" width="12" height="10" fill="#1e293b" />
+                    <rect x="45" y="62" width="8" height="8" fill="#1e293b" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>Monto: {parcel.costoEnvio?.toFixed(2)} BOB</span>
+                <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Vence en: 01:59 minutos</span>
+              </div>
+            </div>
+            <div className="modal__footer" style={{ justifyContent: 'center', gap: 12 }}>
+              <button className="btn btn--secondary" onClick={() => setShowPaymentModal(false)}>
+                Cancelar
+              </button>
+              <button
+                className="btn btn--gold animate-pulse"
+                disabled={pagando}
+                onClick={() => registrarPago({ variables: { id: parcel.id } })}
+                style={{ minWidth: 160 }}
+              >
+                {pagando ? <Loader2 size={15} className="spin" /> : '✓ Confirmar Pago Escaneado'}
               </button>
             </div>
           </div>

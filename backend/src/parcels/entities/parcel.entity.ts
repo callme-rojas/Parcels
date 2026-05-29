@@ -5,7 +5,7 @@ import {
   Float,
   registerEnumType,
 } from '@nestjs/graphql';
-import { CategoriaContenido, EstadoPago } from '@prisma/client';
+import { CategoriaContenido, EstadoPago, TipoPago } from '@prisma/client';
 
 export enum ParcelStatus {
   REGISTRADO = 'REGISTRADO',
@@ -30,6 +30,11 @@ registerEnumType(CategoriaContenido, {
 registerEnumType(EstadoPago, {
   name: 'EstadoPago',
   description: 'Estado del pago de la encomienda',
+});
+
+registerEnumType(TipoPago, {
+  name: 'TipoPago',
+  description: 'Tipo de pago de la encomienda',
 });
 
 @ObjectType({ description: 'Evento de estado de una encomienda' })
@@ -167,6 +172,9 @@ export class Parcel {
 
   @Field({ nullable: true, description: 'Fecha y hora en que se realizó el pago' })
   pagadoEn?: Date;
+
+  @Field(() => TipoPago, { description: 'Tipo de pago (REMITENTE o DESTINATARIO)' })
+  tipoPago!: TipoPago;
 
   // Events
   @Field(() => [ParcelEvent], { nullable: true })

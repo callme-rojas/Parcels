@@ -21,6 +21,7 @@ export default function CobrosPage() {
   const [pagoFilter, setPagoFilter] = useState<string>('TODOS');
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [selectedParcel, setSelectedParcel] = useState<Parcel | null>(null);
 
   // Query parcels
   const { data, loading, error, refetch } = useQuery<{ parcels: Parcel[] }>(GET_PARCELS, {
@@ -32,6 +33,7 @@ export default function CobrosPage() {
     onCompleted: (data) => {
       setSuccessMsg(`Pago de encomienda registrado con éxito.`);
       setTimeout(() => setSuccessMsg(''), 4000);
+      setSelectedParcel(null);
       refetch();
     },
     onError: (err) => {
@@ -283,7 +285,7 @@ export default function CobrosPage() {
                       <button
                         className="btn btn--primary btn--sm"
                         style={{ padding: '4px 8px', minWidth: 'auto', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                        onClick={() => handlePay(p.id)}
+                        onClick={() => setSelectedParcel(p)}
                         disabled={paying}
                       >
                         <ArrowUpRight size={13} /> Cobrar
@@ -298,6 +300,81 @@ export default function CobrosPage() {
           </table>
         </div>
       </div>
+
+      {/* ─── Modal Pago QR Simulado para Cajero ───────────── */}
+      {selectedParcel && (
+        <div className="modal-overlay" onClick={() => setSelectedParcel(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <div className="modal__header">
+              <h3>Cobro de Encomienda (QR Simple)</h3>
+              <button className="modal__close" onClick={() => setSelectedParcel(null)}>✕</button>
+            </div>
+            <div className="modal__body" style={{ textAlign: 'center', padding: '24px 16px' }}>
+              <div style={{ marginBottom: 16 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Registro de Cobro en Taquilla
+                </span>
+                <h4 style={{ fontSize: 15, color: 'var(--navy)', marginTop: 4 }}>Muestre el código QR al destinatario</h4>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                  Encomienda: <strong>{selectedParcel.trackingNumber}</strong> <br />
+                  Destinatario: <strong>{selectedParcel.recipientName}</strong> (CI: {selectedParcel.recipientCi})
+                </p>
+              </div>
+
+              <div style={{ background: 'var(--bg-page)', padding: 16, borderRadius: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, border: '1px solid var(--border)', width: 'fit-content', margin: '0 auto' }}>
+                <div style={{ background: 'white', padding: 10, borderRadius: 8, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                  <svg width="140" height="140" viewBox="0 0 100 100" style={{ display: 'block' }}>
+                    <rect x="0" y="0" width="100" height="100" fill="white" />
+                    <rect x="5" y="5" width="25" height="25" fill="#1e293b" />
+                    <rect x="9" y="9" width="17" height="17" fill="white" />
+                    <rect x="12" y="12" width="11" height="11" fill="#1e293b" />
+                    
+                    <rect x="70" y="5" width="25" height="25" fill="#1e293b" />
+                    <rect x="74" y="9" width="17" height="17" fill="white" />
+                    <rect x="77" y="12" width="11" height="11" fill="#1e293b" />
+                    
+                    <rect x="5" y="70" width="25" height="25" fill="#1e293b" />
+                    <rect x="9" y="74" width="17" height="17" fill="white" />
+                    <rect x="12" y="77" width="11" height="11" fill="#1e293b" />
+                    
+                    <rect x="42" y="42" width="16" height="16" fill="#1e3a8a" rx="2" />
+                    <circle cx="50" cy="50" r="4" fill="#fbbf24" />
+                    
+                    <rect x="40" y="10" width="8" height="8" fill="#475569" />
+                    <rect x="55" y="15" width="6" height="6" fill="#1e293b" />
+                    <rect x="45" y="25" width="12" height="6" fill="#475569" />
+                    <rect x="10" y="40" width="10" height="6" fill="#1e293b" />
+                    <rect x="25" y="45" width="6" height="12" fill="#475569" />
+                    <rect x="15" y="58" width="12" height="8" fill="#1e293b" />
+                    <rect x="70" y="40" width="15" height="6" fill="#475569" />
+                    <rect x="75" y="50" width="8" height="12" fill="#1e293b" />
+                    <rect x="85" y="65" width="10" height="10" fill="#475569" />
+                    <rect x="40" y="70" width="6" height="14" fill="#1e293b" />
+                    <rect x="52" y="75" width="14" height="6" fill="#475569" />
+                    <rect x="60" y="85" width="12" height="10" fill="#1e293b" />
+                    <rect x="45" y="62" width="8" height="8" fill="#1e293b" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--navy)' }}>Monto: {selectedParcel.costoEnvio?.toFixed(2)} BOB</span>
+                <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Vence en: 01:59 minutos</span>
+              </div>
+            </div>
+            <div className="modal__footer" style={{ justifyContent: 'center', gap: 12 }}>
+              <button className="btn btn--secondary" onClick={() => setSelectedParcel(null)}>
+                Cancelar
+              </button>
+              <button
+                className="btn btn--gold animate-pulse"
+                disabled={paying}
+                onClick={() => registrarPago({ variables: { id: selectedParcel.id } })}
+                style={{ minWidth: 160 }}
+              >
+                {paying ? <Loader2 size={15} className="spin" /> : '✓ Confirmar Pago Destinatario'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

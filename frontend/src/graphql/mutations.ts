@@ -143,6 +143,7 @@ export const CREATE_PARCEL_MUTATION = gql`
       esFragil
       costoEnvio
       estadoPago
+      tipoPago
       createdAt
     }
   }
@@ -169,6 +170,7 @@ export const CREATE_PARCEL_AUTH_MUTATION = gql`
       esFragil
       costoEnvio
       estadoPago
+      tipoPago
       createdAt
     }
   }

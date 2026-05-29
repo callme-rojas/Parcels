@@ -241,10 +241,8 @@ export class ParcelsResolver {
   /**
    * Eliminar encomienda — solo ADMINISTRADOR.
    */
-  @UseGuards(GqlAuthGuard, RolesGuard)
-  @Roles(Rol.TAQUILLA, Rol.ADMINISTRADOR)
   @Mutation(() => Parcel, {
-    description: 'Registrar pago de una encomienda (TAQUILLA / ADMIN)',
+    description: 'Registrar/simular pago de una encomienda (Público para Simulación QR)',
   })
   registrarPago(
     @Args('id', { type: () => ID }) id: string,

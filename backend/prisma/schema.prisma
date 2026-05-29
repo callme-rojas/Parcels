@@ -49,21 +49,18 @@ model Parcel {
   assignedBusPlaca   String?
   assignedBusFlota   String?
   assignedBusId      String?               @db.Uuid
+  altoCm             Float?
+  anchoCm            Float?
+  categoria          CategoriaContenido?
+  costoEnvio         Float?
+  esFragil           Boolean               @default(false)
+  estadoPago         EstadoPago            @default(PENDIENTE)
+  largoCm            Float?
+  pagadoEn           DateTime?
+  tipoPago           TipoPago              @default(REMITENTE)
   busAssignments     ParcelBusAssignment[]
   events             ParcelEvent[]
   assignedBus        Bus?                  @relation(fields: [assignedBusId], references: [id])
-
-  // ── Detalles extendidos del paquete (Fase 16) ──────────
-  largoCm            Float?                // longitud en cm
-  anchoCm            Float?                // ancho en cm
-  altoCm             Float?                // alto en cm
-  categoria          CategoriaContenido?   // tipo de contenido
-  esFragil           Boolean               @default(false)
-
-  // ── Costo y pago (preparado para Fase 17) ──────────────
-  costoEnvio         Float?                // calculado automáticamente al crear
-  estadoPago         EstadoPago            @default(PENDIENTE)
-  pagadoEn           DateTime?
 
   @@map("parcels")
 }
@@ -132,6 +129,19 @@ model ParcelEvent {
   @@map("parcel_events")
 }
 
+model Sucursal {
+  id            String   @id @default(uuid()) @db.Uuid
+  nombre        String
+  ciudad        String
+  direccion     String
+  telefono      String?
+  activa        Boolean  @default(true)
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@map("sucursales")
+}
+
 enum Rol {
   ADMINISTRADOR
   TAQUILLA
@@ -172,15 +182,7 @@ enum EstadoPago {
   EXONERADO
 }
 
-model Sucursal {
-  id            String   @id @default(uuid()) @db.Uuid
-  nombre        String
-  ciudad        String
-  direccion     String
-  telefono      String?
-  activa        Boolean  @default(true)
-  creadoEn      DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
-
-  @@map("sucursales")
+enum TipoPago {
+  REMITENTE
+  DESTINATARIO
 }
