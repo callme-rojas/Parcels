@@ -55,8 +55,8 @@ export default function ChoferPage() {
   const [simularOffline, setSimularOffline] = useState<boolean>(false);
   const [viajeActivo, setViajeActivo] = useState<boolean>(false);
   const [origenCoordenadas, setOrigenCoordenadas] = useState<'GPS' | 'RUTA'>('RUTA');
-  const [intervaloSegundos, setIntervaloSegundos] = useState<number>(10);
-  const [indiceRuta, setIndiceRuta] = useState<number>(0);
+  const [intervaloSegundos, setIntervaloSegundos] = useState<number>(60);
+  const [indiceRutaVisual, setIndiceRutaVisual] = useState<number>(0);
   const [colaOffline, setColaOffline] = useState<RegistrarCoordenadaBusInput[]>([]);
   
   // Métrica del punto actual del viaje
@@ -71,6 +71,26 @@ export default function ChoferPage() {
   const [syncProgress, setSyncProgress] = useState<string>('');
 
   const timerRef = useRef<any>(null);
+
+  // Referencias mutables para evitar el bucle infinito y optimizar el filtrado de telemetría
+  const indiceRutaRef = useRef<number>(0);
+  const ultimoPuntoReportadoRef = useRef<{ lat: number; lng: number; timestamp: number } | null>(null);
+
+  // Calcula la distancia en metros entre dos coordenadas (Fórmula Haversine)
+  const calcularDistanciaMetros = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371e3; // Radio de la Tierra en metros
+    const phi1 = (lat1 * Math.PI) / 180;
+    const phi2 = (lat2 * Math.PI) / 180;
+    const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+    const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+      Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  };
 
   // Obtener lista de buses para el selector
   const { data: busesData, loading: loadingBuses } = useQuery<{ buses: Bus[] }>(GET_BUSES, {
@@ -115,7 +135,7 @@ export default function ChoferPage() {
     }
   }, [activeOnline, colaOffline.length]);
 
-  // Manejar el ciclo de captura de coordenadas
+  // Manejar el ciclo de captura de coordenadas (SIN DEPENDER de indiceRutaVisual)
   useEffect(() => {
     if (viajeActivo && selectedBusId) {
       capturarYEnviar();
@@ -136,7 +156,7 @@ export default function ChoferPage() {
         clearInterval(timerRef.current);
       }
     };
-  }, [viajeActivo, selectedBusId, origenCoordenadas, intervaloSegundos, indiceRuta, simularOffline, isOnline]);
+  }, [viajeActivo, selectedBusId, origenCoordenadas, intervaloSegundos, simularOffline, isOnline]);
 
   // Sincronización en paralelo acelerada
   const procesarColaSincronizacion = async () => {
@@ -174,7 +194,6 @@ export default function ChoferPage() {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
     } catch (err: any) {
       console.error('Error al sincronizar cola local:', err);
-      // Mantener en cola si falla para reintento posterior
     } finally {
       setSyncing(false);
       setSyncProgress('');
@@ -192,7 +211,7 @@ export default function ChoferPage() {
       const routeCode = selectedBus?.routeCode || 'SCZ-PQA';
       const puntos = PUNTOS_RUTA[routeCode] || PUNTOS_RUTA['SCZ-PQA'];
       
-      const punto = puntos[indiceRuta];
+      const punto = puntos[indiceRutaRef.current];
       if (!punto) {
         setViajeActivo(false);
         setCurrentLocationName('Llegada a destino');
@@ -210,7 +229,9 @@ export default function ChoferPage() {
 
       registrarPuntoGps({ busId: selectedBusId, lat, lng, velocidad: mockSpeed, recordedAt: timestamp });
       
-      setIndiceRuta(prev => (prev + 1) % puntos.length);
+      // Avanzar el índice de la ruta usando la referencia mutable
+      indiceRutaRef.current = (indiceRutaRef.current + 1) % puntos.length;
+      setIndiceRutaVisual(indiceRutaRef.current);
     } else {
       if (!navigator.geolocation) {
         alert('El GPS no está disponible en este dispositivo.');
@@ -240,9 +261,47 @@ export default function ChoferPage() {
     }
   };
 
-  // Registrar coordenada
+  // Registrar coordenada con filtros de telemetría inteligentes
   const registrarPuntoGps = async (input: RegistrarCoordenadaBusInput) => {
+    const ahora = Date.now();
+    const lat = input.lat;
+    const lng = input.lng;
+    const velocidad = input.velocidad ?? 0;
     const timeStr = new Date(input.recordedAt || '').toLocaleTimeString();
+
+    // ── Filtro 1: Frecuencia dinámica si el bus está detenido (velocidad <= 5) ──
+    if (ultimoPuntoReportadoRef.current && velocidad <= 5) {
+      const minutosDesdeUltimo = (ahora - ultimoPuntoReportadoRef.current.timestamp) / 1000 / 60;
+      if (minutosDesdeUltimo < 5) {
+        // Ignoramos el reporte ya que el bus está detenido y no han pasado 5 minutos
+        setHistorialLocal(prev => [
+          { lat, lng, status: 'DETENIDO (OMITIDO)', time: timeStr },
+          ...prev.slice(0, 19)
+        ]);
+        return;
+      }
+    }
+
+    // ── Filtro 2: Filtro de distancia mínima si está en movimiento (velocidad > 5) ──
+    if (ultimoPuntoReportadoRef.current && velocidad > 5) {
+      const distancia = calcularDistanciaMetros(
+        lat,
+        lng,
+        ultimoPuntoReportadoRef.current.lat,
+        ultimoPuntoReportadoRef.current.lng
+      );
+      if (distancia < 100) {
+        // Ignoramos el reporte porque se movió menos de 100 metros
+        setHistorialLocal(prev => [
+          { lat, lng, status: '<100m (OMITIDO)', time: timeStr },
+          ...prev.slice(0, 19)
+        ]);
+        return;
+      }
+    }
+
+    // Actualizar referencia de último punto registrado con éxito
+    ultimoPuntoReportadoRef.current = { lat, lng, timestamp: ahora };
     setLastReportTime(timeStr);
 
     if (activeOnline) {
@@ -266,11 +325,17 @@ export default function ChoferPage() {
     const timeStr = new Date(input.recordedAt || '').toLocaleTimeString();
     setColaOffline(prev => {
       const newQueue = [...prev, input];
+      
+      // ── Filtro 3: Límite de tamaño de cola local (máx 300) ──
+      if (newQueue.length > 300) {
+        newQueue.shift(); // Elimina el reporte más antiguo
+      }
+      
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newQueue));
       return newQueue;
     });
     setHistorialLocal(prev => [
-      { lat: input.lat, lng: input.lng, status: 'EN COLA OFFLINE', time: timeStr },
+      { lat: input.lat, lng: input.lng, status: 'COLA OFFLINE', time: timeStr },
       ...prev.slice(0, 19)
     ]);
   };
@@ -343,7 +408,8 @@ export default function ChoferPage() {
               value={selectedBusId}
               onChange={(e) => {
                 setSelectedBusId(e.target.value);
-                setIndiceRuta(0);
+                indiceRutaRef.current = 0;
+                setIndiceRutaVisual(0);
                 setCurrentLocationName('Listo para iniciar');
               }}
               style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '13px' }}
@@ -388,7 +454,7 @@ export default function ChoferPage() {
             </span>
           </div>
 
-          {/* Stepper visual de la ruta (HIGHLIGHTING THE POSITION) */}
+          {/* Stepper visual de la ruta */}
           {origenCoordenadas === 'RUTA' && (
             <div style={{ margin: '24px 0 16px 0', padding: '0 10px' }}>
               <div style={{ height: '4px', backgroundColor: 'var(--border)', borderRadius: '2px', position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -399,7 +465,7 @@ export default function ChoferPage() {
                   left: 0,
                   height: '4px',
                   backgroundColor: 'var(--navy)',
-                  width: `${(indiceRuta / Math.max(1, puntos.length - 1)) * 100}%`,
+                  width: `${(indiceRutaVisual / Math.max(1, puntos.length - 1)) * 100}%`,
                   borderRadius: '2px',
                   transition: 'width 0.5s ease'
                 }} />
@@ -414,7 +480,7 @@ export default function ChoferPage() {
                   width: '10px', 
                   height: '10px', 
                   borderRadius: '50%', 
-                  backgroundColor: indiceRuta > puntos.length / 2 ? 'var(--navy)' : 'var(--border)', 
+                  backgroundColor: indiceRutaVisual > puntos.length / 2 ? 'var(--navy)' : 'var(--border)', 
                   border: '2px solid white', 
                   zIndex: 2, 
                   position: 'relative' 
@@ -427,7 +493,7 @@ export default function ChoferPage() {
                   width: '10px', 
                   height: '10px', 
                   borderRadius: '50%', 
-                  backgroundColor: indiceRuta === puntos.length - 1 ? 'var(--navy)' : 'var(--border)', 
+                  backgroundColor: indiceRutaVisual === puntos.length - 1 ? 'var(--navy)' : 'var(--border)', 
                   border: '2px solid white', 
                   zIndex: 2, 
                   position: 'relative' 
@@ -439,7 +505,7 @@ export default function ChoferPage() {
 
               </div>
               <div style={{ marginTop: '22px', fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                Progreso: {indiceRuta} / {puntos.length} puntos de control
+                Progreso: {indiceRutaVisual} / {puntos.length} puntos de control
               </div>
             </div>
           )}
@@ -470,7 +536,15 @@ export default function ChoferPage() {
               <button
                 type="button"
                 className="btn btn--primary"
-                onClick={() => setViajeActivo(true)}
+                onClick={() => {
+                  if (!selectedBusId) {
+                    alert('Debe seleccionar el bus asignado antes de iniciar el viaje.');
+                    return;
+                  }
+                  indiceRutaRef.current = 0;
+                  setIndiceRutaVisual(0);
+                  setViajeActivo(true);
+                }}
                 style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: 'var(--radius)' }}
               >
                 <Play size={18} fill="white" /> INICIAR TRANSMISIÓN
@@ -549,9 +623,11 @@ export default function ChoferPage() {
                 disabled={viajeActivo}
                 style={{ width: '100%', padding: '6px', fontSize: '11px' }}
               >
-                <option value={5}>Cada 5 seg</option>
-                <option value={10}>Cada 10 seg</option>
+                <option value={5}>Cada 5 seg (Pruebas)</option>
+                <option value={10}>Cada 10 seg (Pruebas)</option>
                 <option value={30}>Cada 30 seg</option>
+                <option value={60}>Cada 1 min (Producción)</option>
+                <option value={300}>Cada 5 min (Producción)</option>
               </select>
             </div>
           </div>
