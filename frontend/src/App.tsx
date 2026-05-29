@@ -29,6 +29,10 @@ import ReportesPage from './pages/ReportesPage';
 import MisEnviosPage from './pages/MisEnviosPage';
 import DetalleEncomiendaPage from './pages/DetalleEncomiendaPage';
 import BusesPage from './pages/BusesPage';
+import CobrosPage from './pages/CobrosPage';
+import ManifiestosPage from './pages/ManifiestosPage';
+import IncidenciasPage from './pages/IncidenciasPage';
+import AyudaPage from './pages/AyudaPage';
 
 function AppRoutes() {
   const user = useAuthStore((s) => s.user);
@@ -70,11 +74,13 @@ function AppRoutes() {
           <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR, Rol.TAQUILLA]} />}>
             <Route path="/taquilla" element={<TaquillaPage />} />
             <Route path="/entrega" element={<EncomiendasPage />} />
+            <Route path="/cobros" element={<CobrosPage />} />
           </Route>
 
           {/* Bodega routes */}
           <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR, Rol.BODEGA]} />}>
             <Route path="/bodega" element={<BodegaPage />} />
+            <Route path="/manifiestos" element={<ManifiestosPage />} />
           </Route>
 
           {/* Shared internal routes (all authenticated roles) */}
@@ -82,11 +88,13 @@ function AppRoutes() {
             <Route path="/encomiendas" element={<EncomiendasPage />} />
             <Route path="/encomiendas/:id" element={<DetalleEncomiendaPage />} />
             <Route path="/seguimiento" element={<SeguimientoPage />} />
+            <Route path="/ayuda" element={<AyudaPage />} />
           </Route>
 
           {/* Admin, Bodega, and Taquilla routes (Operations) */}
           <Route element={<RoleRoute allowedRoles={[Rol.ADMINISTRADOR, Rol.BODEGA, Rol.TAQUILLA]} />}>
             <Route path="/buses" element={<BusesPage />} />
+            <Route path="/incidencias" element={<IncidenciasPage />} />
           </Route>
 
           {/* CLIENTE routes */}

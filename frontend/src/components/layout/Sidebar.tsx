@@ -80,7 +80,6 @@ const NAV_BY_ROLE: Record<Rol, NavSection[]> = {
         { label: 'Encomiendas pendientes', path: '/bodega', icon: <Package size={18} /> },
         { label: 'Manifiestos & carga', path: '/manifiestos', icon: <ClipboardList size={18} /> },
         { label: 'Buses & flota', path: '/buses', icon: <Truck size={18} /> },
-        { label: 'Dispositivos IoT', path: '/iot', icon: <Radio size={18} /> },
       ],
     },
     {

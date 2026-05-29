@@ -548,6 +548,19 @@ export class ParcelsService {
     return this.toEntity(updated);
   }
 
+  async registrarPago(id: string) {
+    await this.findOne(id);
+    const updated = await this.prisma.parcel.update({
+      where: { id },
+      data: {
+        estadoPago: 'PAGADO',
+        pagadoEn: new Date(),
+      },
+      include: { events: { orderBy: { createdAt: 'asc' } } },
+    });
+    return this.toEntity(updated);
+  }
+
   async remove(id: string): Promise<boolean> {
     await this.findOne(id);
     await this.prisma.parcel.delete({ where: { id } });

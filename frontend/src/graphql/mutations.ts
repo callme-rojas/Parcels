@@ -110,6 +110,16 @@ export const TOGGLE_SUCURSAL_ACTIVA_MUTATION = gql`
   }
 `;
 
+export const REGISTRAR_PAGO_MUTATION = gql`
+  mutation RegistrarPago($id: ID!) {
+    registrarPago(id: $id) {
+      id
+      estadoPago
+      pagadoEn
+    }
+  }
+`;
+
 // ─── Parcel Mutations ──────────────────────────────────────────
 
 /** Crear encomienda (sin auth — flujo público o con cuenta) */

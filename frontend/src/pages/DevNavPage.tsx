@@ -5,7 +5,8 @@ import type { Usuario } from '../types';
 import {
   LayoutDashboard, Package, ScanLine, Warehouse, MapPin, Users,
   BarChart3, FileBarChart, Truck, Globe, UserPlus, LogIn, Send,
-  Eye, Settings, ArrowRight, Zap
+  Eye, Settings, ArrowRight, Zap, HelpCircle, AlertTriangle,
+  DollarSign, ClipboardList
 } from 'lucide-react';
 
 // Dev users for quick-login
@@ -35,6 +36,7 @@ const ALL_ROUTES: { section: string; color: string; routes: RouteItem[] }[] = [
       { path: '/enviar', label: 'Enviar Paquete (Guest)', icon: <Send size={18} />, isPublic: true, description: 'Crear envío sin cuenta', cu: 'CU-01, CU-02' },
       { path: '/login', label: 'Login', icon: <LogIn size={18} />, isPublic: true, description: 'Iniciar sesión' },
       { path: '/registro', label: 'Registro', icon: <UserPlus size={18} />, isPublic: true, description: 'Crear cuenta de usuario' },
+      { path: '/ayuda', label: 'Centro de Ayuda', icon: <HelpCircle size={18} />, isPublic: true, description: 'FAQs y documentación del sistema' },
     ],
   },
   {
@@ -47,6 +49,7 @@ const ALL_ROUTES: { section: string; color: string; routes: RouteItem[] }[] = [
       { path: '/reportes', label: 'Reportes', icon: <BarChart3 size={18} />, requiresRole: [Rol.ADMINISTRADOR], description: 'Reportes por ruta/fecha/estado', cu: 'CU-15' },
       { path: '/seguimiento', label: 'Seguimiento GPS', icon: <MapPin size={18} />, requiresRole: [Rol.ADMINISTRADOR], description: 'Mapa en tiempo real', cu: 'CU-17, CU-18' },
       { path: '/buses', label: 'Buses y Flotas', icon: <Truck size={18} />, requiresRole: [Rol.ADMINISTRADOR, Rol.BODEGA, Rol.TAQUILLA], description: 'Gestión de buses, flotas y salidas', cu: 'CU-10, CU-11' },
+      { path: '/incidencias', label: 'Incidencias', icon: <AlertTriangle size={18} />, requiresRole: [Rol.ADMINISTRADOR, Rol.TAQUILLA, Rol.BODEGA], description: 'Registro y seguimiento de incidencias' },
     ],
   },
   {
@@ -55,6 +58,7 @@ const ALL_ROUTES: { section: string; color: string; routes: RouteItem[] }[] = [
     routes: [
       { path: '/taquilla', label: 'Panel Taquilla', icon: <ScanLine size={18} />, requiresRole: [Rol.TAQUILLA], description: 'Recepcionar, escanear, actualizar estado', cu: 'CU-05, CU-06, CU-07, CU-08' },
       { path: '/entrega', label: 'Entrega al Cliente', icon: <FileBarChart size={18} />, requiresRole: [Rol.TAQUILLA], description: 'Confirmar retiro con CI', cu: 'CU-09' },
+      { path: '/cobros', label: 'Cobros del Turno', icon: <DollarSign size={18} />, requiresRole: [Rol.TAQUILLA, Rol.ADMINISTRADOR], description: 'Historial de caja y cobro de envíos', cu: 'CU-08' },
     ],
   },
   {
@@ -62,6 +66,7 @@ const ALL_ROUTES: { section: string; color: string; routes: RouteItem[] }[] = [
     color: '#7C3AED',
     routes: [
       { path: '/bodega', label: 'Panel Bodega', icon: <Warehouse size={18} />, requiresRole: [Rol.BODEGA], description: 'Clasificar, asignar a bus, carga/descarga', cu: 'CU-10, CU-11, CU-12, CU-13' },
+      { path: '/manifiestos', label: 'Manifiestos de Carga', icon: <ClipboardList size={18} />, requiresRole: [Rol.BODEGA, Rol.ADMINISTRADOR], description: 'Asignar carga y hoja de ruta de buses', cu: 'CU-10, CU-11' },
     ],
   },
   {

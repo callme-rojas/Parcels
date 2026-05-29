@@ -242,6 +242,17 @@ export class ParcelsResolver {
    * Eliminar encomienda — solo ADMINISTRADOR.
    */
   @UseGuards(GqlAuthGuard, RolesGuard)
+  @Roles(Rol.TAQUILLA, Rol.ADMINISTRADOR)
+  @Mutation(() => Parcel, {
+    description: 'Registrar pago de una encomienda (TAQUILLA / ADMIN)',
+  })
+  registrarPago(
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<Parcel> {
+    return this.parcelsService.registrarPago(id);
+  }
+
+  @UseGuards(GqlAuthGuard, RolesGuard)
   @Roles(Rol.ADMINISTRADOR)
   @Mutation(() => Boolean, {
     description: 'Eliminar encomienda (solo ADMINISTRADOR)',
