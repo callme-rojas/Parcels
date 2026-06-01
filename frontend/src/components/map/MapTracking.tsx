@@ -89,20 +89,24 @@ export default function MapTracking({
         .addTo(map);
 
       // ── Línea de ruta (origen → destino) ─────────────────
+      // Iniciamos con la línea recta como fallback seguro
+      const fallbackGeojson: any = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [originLng, originLat],
+            [destinationLng, destinationLat],
+          ],
+        },
+      };
+
       map.addSource('route', {
         type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: [
-              [originLng, originLat],
-              [destinationLng, destinationLat],
-            ],
-          },
-        },
+        data: fallbackGeojson,
       });
+
       map.addLayer({
         id: 'route-line',
         type: 'line',
@@ -115,6 +119,31 @@ export default function MapTracking({
           'line-opacity': 0.75,
         },
       });
+
+      // Intentar obtener el trazado real por carretera desde la API de Direcciones de Mapbox
+      if (mapboxgl.accessToken) {
+        const queryUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${originLng},${originLat};${destinationLng},${destinationLat}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
+        fetch(queryUrl)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.routes && data.routes.length > 0) {
+              const routeGeometry = data.routes[0].geometry;
+              const routeSource = map.getSource('route') as mapboxgl.GeoJSONSource;
+              if (routeSource) {
+                routeSource.setData({
+                  type: 'Feature',
+                  properties: {},
+                  geometry: routeGeometry,
+                });
+              }
+            } else {
+              console.warn('Mapbox Directions: No se encontraron rutas por carretera. Se mantiene la línea recta.');
+            }
+          })
+          .catch((err) => {
+            console.warn('Mapbox Directions: Error al obtener ruta por carretera, usando fallback de línea recta:', err);
+          });
+      }
 
       // ── Marcador del Bus (dorado, si hay coordenadas) ─────
       if (busLat !== undefined && busLng !== undefined) {
