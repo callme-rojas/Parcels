@@ -12,7 +12,7 @@ import { useAuthStore } from '../stores/authStore';
 import { ESTADO_CONFIG, Rol, EstadoEncomienda } from '../types';
 import type { EstadoEncomienda as EstadoType } from '../types';
 import MapTracking from '../components/map/MapTracking';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GENERAR_ETIQUETA } from '../graphql/queries';
 
 const ESTADO_BADGE: Record<string, { label: string; className: string }> = {
@@ -63,11 +63,31 @@ export default function DetalleEncomiendaPage() {
     },
   });
 
-  // Generar código PDF417 real al ver la etiqueta
+  const [shouldPrint, setShouldPrint] = useState(false);
+
+  // Generar código PDF417 real al ver la etiqueta o al imprimir
   const { data: etiquetaData, loading: loadingEtiqueta } = useQuery<{ generarEtiqueta: string }>(GENERAR_ETIQUETA, {
     variables: { parcelId: id },
-    skip: !showLabelModal,
+    skip: !showLabelModal && !shouldPrint,
   });
+
+  // Imprimir automáticamente una vez que cargue el código de barra
+  useEffect(() => {
+    if (shouldPrint && !loadingEtiqueta) {
+      if (etiquetaData?.generarEtiqueta) {
+        window.print();
+      }
+      setShouldPrint(false);
+    }
+  }, [shouldPrint, loadingEtiqueta, etiquetaData]);
+
+  const handlePrint = () => {
+    if (etiquetaData?.generarEtiqueta) {
+      window.print();
+    } else {
+      setShouldPrint(true);
+    }
+  };
 
   const notify = (text: string, ok = true) => {
     setActionMsg({ ok, text });
@@ -182,7 +202,7 @@ export default function DetalleEncomiendaPage() {
             <button className="btn btn--secondary btn--sm" onClick={() => setShowLabelModal(true)}>
               <FileBarChart size={15} /> Ver etiqueta
             </button>
-            <button className="btn btn--secondary btn--sm" onClick={() => window.print()}>
+            <button className="btn btn--secondary btn--sm" onClick={handlePrint}>
               <Printer size={15} /> Imprimir
             </button>
           </div>
@@ -673,6 +693,89 @@ export default function DetalleEncomiendaPage() {
               >
                 {pagando ? <Loader2 size={15} className="spin" /> : '✓ Confirmar Pago Escaneado'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Elemento de impresión oculta en pantalla pero activa en impresión ─── */}
+      {parcel && (
+        <div className="print-only">
+          <div className="envio-label" style={{ margin: '0 auto', border: '1px solid var(--border)' }}>
+            <div className="envio-label__header">
+              <Package size={20} /> <strong>Travell Encomiendas</strong>
+            </div>
+            <div className="envio-label__code">{parcel.trackingNumber}</div>
+            
+            <div className="envio-label__barcode">
+              {loadingEtiqueta ? (
+                <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Loader2 className="spin" size={24} style={{ color: 'var(--navy)' }} />
+                </div>
+              ) : etiquetaData?.generarEtiqueta ? (
+                <img
+                  src={etiquetaData.generarEtiqueta}
+                  alt="PDF417 Barcode"
+                  style={{ maxHeight: 70, maxWidth: '100%', margin: '12px auto', display: 'block' }}
+                />
+              ) : (
+                <div style={{ color: 'var(--danger)', fontSize: 12, padding: 12 }}>
+                  Error al generar código de barra PDF417
+                </div>
+              )}
+            </div>
+
+            <div className="envio-label__grid">
+              <div>
+                <span>Remitente</span>
+                <strong>{parcel.senderName}</strong>
+              </div>
+              <div>
+                <span>Destinatario</span>
+                <strong>{parcel.recipientName}</strong>
+              </div>
+              <div>
+                <span>Origen → Destino</span>
+                <strong>
+                  {parcel.originAddress.split(',')[0]} →{' '}
+                  {parcel.destinationAddress.split(',')[0]}
+                </strong>
+              </div>
+              <div>
+                <span>Categoría</span>
+                <strong>{parcel.categoria || 'Otro'}</strong>
+              </div>
+              <div>
+                <span>Dimensiones</span>
+                <strong>
+                  {parcel.largoCm && parcel.anchoCm && parcel.altoCm
+                    ? `${parcel.largoCm}x${parcel.anchoCm}x${parcel.altoCm} cm`
+                    : 'No especificado'}
+                </strong>
+              </div>
+              <div>
+                <span>Peso</span>
+                <strong>{parcel.weight} kg</strong>
+              </div>
+              <div>
+                <span>Costo de Envío</span>
+                <strong style={{ color: 'var(--success)' }}>
+                  {parcel.costoEnvio ? `${parcel.costoEnvio} BOB` : 'Por liquidar'}
+                </strong>
+              </div>
+              <div>
+                <span>Estado Pago</span>
+                <strong
+                  style={{
+                    color:
+                      parcel.estadoPago === 'PAGADO'
+                        ? 'var(--success)'
+                        : 'var(--danger)',
+                  }}
+                >
+                  {parcel.estadoPago || 'PENDIENTE'}
+                </strong>
+              </div>
             </div>
           </div>
         </div>

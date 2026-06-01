@@ -3240,3 +3240,129 @@ select.form-input {
     top: 12%;
   }
 }
+
+/* ─── Print Styles ──────────────────────────────────────── */
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 0.5cm;
+    size: portrait;
+  }
+
+  /* Reset layout for print */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Hide screen-only containers by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Make only the label/manifest visible */
+  .envio-label,
+  .envio-label *,
+  .manifest-print-area,
+  .manifest-print-area * {
+    visibility: visible !important;
+  }
+
+  /* Reset layout wrappers to collapse screen positioning space and allow clean flow */
+  .app-layout,
+  .app-layout__main,
+  .app-layout__content,
+  main,
+  .panel-page,
+  .modal-overlay,
+  .modal,
+  .modal__body,
+  .envio-success {
+    position: static !important;
+    display: block !important;
+    visibility: visible !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    transform: none !important;
+  }
+
+  /* Display print-only wrapper */
+  .print-only {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Envio label visual styles for printing */
+  .envio-label {
+    position: relative !important;
+    margin: 20px auto !important;
+    padding: 24px !important;
+    width: 100% !important;
+    max-width: 380px !important;
+    border: 2px dashed #000000 !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* High contrast styling for barcode and text fields */
+  .envio-label,
+  .envio-label__header,
+  .envio-label__code,
+  .envio-label__barcode,
+  .envio-label__grid,
+  .envio-label__grid div,
+  .envio-label__grid div span,
+  .envio-label__grid div strong {
+    color: #000000 !important;
+  }
+
+  .envio-label__header {
+    border-bottom: 1px solid #000000 !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .envio-label__grid {
+    border-top: 1px solid #000000 !important;
+    margin-top: 12px !important;
+    padding-top: 12px !important;
+  }
+
+  .envio-label__grid div span {
+    color: #333333 !important;
+  }
+
+  /* Hide screen actions and other secondary blocks */
+  button,
+  .btn,
+  .no-print,
+  .modal__header,
+  .modal__footer,
+  .envio-card__actions,
+  .detalle-header,
+  .envio-card__title,
+  .envio-card__desc,
+  .taq-scan-result,
+  .dashboard-panel,
+  .dashboard-panel * {
+    display: none !important;
+  }
+}
