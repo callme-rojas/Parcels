@@ -193,6 +193,33 @@ export class ReportsService {
       this.buildRutaConteos(where, 10),
     ]);
 
+    // Calcular agregados de dinero
+    const pagosSum = await this.prisma.parcel.aggregate({
+      where,
+      _sum: { costoEnvio: true },
+    });
+    const montoTotalRegistrado = Math.round((pagosSum._sum.costoEnvio || 0) * 100) / 100;
+
+    const pagosAgrupados = await this.prisma.parcel.groupBy({
+      by: ['estadoPago'],
+      where,
+      _count: { id: true },
+      _sum: { costoEnvio: true },
+    });
+
+    let totalVentaEtiquetas = 0;
+    let montoTotalPagado = 0;
+    let montoTotalPendiente = 0;
+
+    for (const group of pagosAgrupados) {
+      if (group.estadoPago === 'PAGADO') {
+        totalVentaEtiquetas = group._count.id;
+        montoTotalPagado = Math.round((group._sum.costoEnvio || 0) * 100) / 100;
+      } else if (group.estadoPago === 'PENDIENTE') {
+        montoTotalPendiente = Math.round((group._sum.costoEnvio || 0) * 100) / 100;
+      }
+    }
+
     const tasaEntregaExitosa =
       totalRegistradas > 0
         ? Math.round((totalEntregadas / totalRegistradas) * 1000) / 10
@@ -209,6 +236,10 @@ export class ReportsService {
       totalRecepcionadas,
       totalEnDestino,
       tasaEntregaExitosa,
+      totalVentaEtiquetas,
+      montoTotalRegistrado,
+      montoTotalPagado,
+      montoTotalPendiente,
       encomiendasPorRuta,
     };
   }

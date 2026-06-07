@@ -246,8 +246,9 @@ export class ParcelsResolver {
   })
   registrarPago(
     @Args('id', { type: () => ID }) id: string,
+    @Args('metodoPago', { type: () => String, nullable: true }) metodoPago?: string,
   ): Promise<Parcel> {
-    return this.parcelsService.registrarPago(id);
+    return this.parcelsService.registrarPago(id, metodoPago);
   }
 
   @UseGuards(GqlAuthGuard, RolesGuard)

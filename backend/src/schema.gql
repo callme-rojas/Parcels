@@ -155,6 +155,9 @@ input CreateParcelInput {
   """Largo del paquete en cm"""
   largoCm: Float
 
+  """Método de pago (QR o EFECTIVO)"""
+  metodoPago: String
+
   """Observaciones o instrucciones especiales"""
   observations: String
 
@@ -234,6 +237,19 @@ type IndicadoresOperativos {
 
   """Entregadas / registradas × 100"""
   tasaEntregaExitosa: Float!
+
+  """Cantidad de etiquetas vendidas (pagadas)"""
+  totalVentaEtiquetas: Int!
+
+  """Monto total de dinero en encomiendas registradas"""
+  montoTotalRegistrado: Float!
+
+  """Monto total recaudado (pagado)"""
+  montoTotalPagado: Float!
+
+  """Monto total pendiente de cobro"""
+  montoTotalPendiente: Float!
+
   totalCanceladas: Int!
   totalDisponibles: Int!
   totalEnDestino: Int!
@@ -299,7 +315,7 @@ type Mutation {
   registrarDescarga(input: ParcelActionInput!): Parcel!
 
   """Registrar/simular pago de una encomienda (Público para Simulación QR)"""
-  registrarPago(id: ID!): Parcel!
+  registrarPago(id: ID!, metodoPago: String): Parcel!
 
   """Eliminar encomienda (solo ADMINISTRADOR)"""
   removeParcel(id: ID!): Boolean!
@@ -357,6 +373,9 @@ type Parcel {
 
   """Largo del paquete en cm"""
   largoCm: Float
+
+  """Método de pago (QR o EFECTIVO)"""
+  metodoPago: String
 
   """Observaciones adicionales"""
   observations: String

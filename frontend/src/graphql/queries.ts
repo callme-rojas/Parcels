@@ -160,6 +160,7 @@ export const GET_BUSES = gql`
       placa
       flota
       routeCode
+      capacidad
       cargados
       estado
       activo
@@ -263,6 +264,10 @@ export const GET_INDICADORES_OPERATIVOS = gql`
       totalRecepcionadas
       totalEnDestino
       tasaEntregaExitosa
+      totalVentaEtiquetas
+      montoTotalRegistrado
+      montoTotalPagado
+      montoTotalPendiente
       encomiendasPorRuta {
         routeCode
         routeLabel

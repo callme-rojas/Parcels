@@ -11,7 +11,8 @@ import {
   Calendar,
   Truck,
   CheckCircle2,
-  XCircle
+  XCircle,
+  DollarSign
 } from 'lucide-react';
 import { GET_INDICADORES_OPERATIVOS, GET_REPORTE_ENCOMIENDAS } from '../graphql/queries';
 
@@ -109,6 +110,15 @@ export default function ReportesPage() {
                   <div><span>Total Registradas</span><strong>{indicadores?.totalRegistradas}</strong></div>
                   <div><span>En Tránsito</span><strong>{indicadores?.totalEnTransito}</strong></div>
                   <div><span>Disponibles en Destino</span><strong>{indicadores?.totalDisponibles}</strong></div>
+                </div>
+              </div>
+              <div className="detalle-card">
+                <h3 className="detalle-card__title"><DollarSign size={16} style={{ color: 'var(--accent)' }} /> Resumen Financiero</h3>
+                <div className="detalle-card__fields">
+                  <div><span>Etiquetas Vendidas</span><strong>{indicadores?.totalVentaEtiquetas || 0}</strong></div>
+                  <div><span>Total Recaudado</span><strong style={{ color: 'var(--success)' }}>{(indicadores?.montoTotalPagado || 0).toFixed(2)} BOB</strong></div>
+                  <div><span>Pendiente de Cobro</span><strong style={{ color: 'var(--danger)' }}>{(indicadores?.montoTotalPendiente || 0).toFixed(2)} BOB</strong></div>
+                  <div><span>Total Registrado</span><strong>{(indicadores?.montoTotalRegistrado || 0).toFixed(2)} BOB</strong></div>
                 </div>
               </div>
             </div>

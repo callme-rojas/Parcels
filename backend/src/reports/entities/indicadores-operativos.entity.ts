@@ -33,6 +33,18 @@ export class IndicadoresOperativos {
   @Field(() => Float, { description: 'Entregadas / registradas × 100' })
   tasaEntregaExitosa!: number;
 
+  @Field(() => Int, { description: 'Cantidad de etiquetas vendidas (pagadas)' })
+  totalVentaEtiquetas!: number;
+
+  @Field(() => Float, { description: 'Monto total de dinero en encomiendas registradas' })
+  montoTotalRegistrado!: number;
+
+  @Field(() => Float, { description: 'Monto total recaudado (pagado)' })
+  montoTotalPagado!: number;
+
+  @Field(() => Float, { description: 'Monto total pendiente de cobro' })
+  montoTotalPendiente!: number;
+
   @Field(() => [RutaConteo], { description: 'Top rutas por volumen en el período' })
   encomiendasPorRuta!: RutaConteo[];
 }

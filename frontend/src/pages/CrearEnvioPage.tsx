@@ -68,12 +68,13 @@ export default function CrearEnvioPage() {
   const [serverError, setServerError] = useState('');
   const [parcelCreado, setParcelCreado] = useState<Parcel | null>(null);
   const [tipoPago, setTipoPago] = useState<'REMITENTE' | 'DESTINATARIO'>('REMITENTE');
+  const [metodoPago, setMetodoPago] = useState<'QR' | 'EFECTIVO'>('QR');
 
   const [registrarPago, { loading: payingQr }] = useMutation<any>(REGISTRAR_PAGO_MUTATION);
 
   const handleSimulatePayment = async (id: string) => {
     try {
-      const { data } = await registrarPago({ variables: { id } });
+      const { data } = await registrarPago({ variables: { id, metodoPago: 'QR' } });
       if (data?.registrarPago && parcelCreado) {
         setParcelCreado({
           ...parcelCreado,
@@ -180,6 +181,7 @@ export default function CrearEnvioPage() {
         categoria: categoria as any,
         esFragil,
         tipoPago,
+        metodoPago: tipoPago === 'REMITENTE' ? metodoPago : undefined,
       });
 
       setParcelCreado(result);
@@ -515,9 +517,33 @@ export default function CrearEnvioPage() {
                   </div>
                   <small style={{ color: 'var(--text-muted)', fontSize: 11, marginTop: 4, display: 'block' }}>
                     {tipoPago === 'REMITENTE'
-                      ? 'Pagarás de forma virtual mediante QR Simple en el siguiente paso para confirmar tu envío.'
+                      ? 'Selecciona si realizarás el pago de forma virtual o en efectivo en nuestras oficinas.'
                       : 'El destinatario deberá pagar el costo total del envío al momento de retirar el paquete.'}
                   </small>
+                  
+                  {tipoPago === 'REMITENTE' && (
+                    <div style={{ marginTop: 12 }}>
+                      <label className="form-label" style={{ fontSize: 12, fontWeight: 600 }}>Método de Pago *</label>
+                      <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+                        <button
+                          type="button"
+                          className={`btn btn--sm ${metodoPago === 'QR' ? 'btn--primary' : 'btn--secondary'}`}
+                          style={{ flex: 1, padding: '8px', fontSize: 12, minWidth: 'auto' }}
+                          onClick={() => setMetodoPago('QR')}
+                        >
+                          📱 Pago con QR Simple
+                        </button>
+                        <button
+                          type="button"
+                          className={`btn btn--sm ${metodoPago === 'EFECTIVO' ? 'btn--primary' : 'btn--secondary'}`}
+                          style={{ flex: 1, padding: '8px', fontSize: 12, minWidth: 'auto' }}
+                          onClick={() => setMetodoPago('EFECTIVO')}
+                        >
+                          💵 Efectivo en Ventanilla
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="envio-form__row">
@@ -624,6 +650,23 @@ export default function CrearEnvioPage() {
                   </div>
                 </div>
               )}
+
+              <div className="envio-disclaimer" style={{ 
+                marginTop: 20, 
+                padding: 14, 
+                background: 'rgba(239, 68, 68, 0.05)', 
+                border: '1px solid rgba(239, 68, 68, 0.2)', 
+                borderRadius: 8,
+                fontSize: 11,
+                color: 'var(--text-secondary)',
+                lineHeight: 1.4,
+                textAlign: 'left'
+              }}>
+                <span style={{ fontWeight: 700, color: 'var(--danger)', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  ⚠️ Términos y Condiciones del Envío
+                </span>
+                Si el paquete no se entrega físicamente en nuestras oficinas autorizadas en origen, o si una vez llegado a su destino transcurren <strong>15 días calendario</strong> sin ser retirado por el destinatario, la encomienda se considerará automáticamente como <strong>Cancelada/Abandonada</strong> sin derecho a devoluciones ni reembolsos. Asimismo, la empresa no asume ninguna responsabilidad sobre paquetes dañados, deteriorados o perecederos no retirados a tiempo.
+              </div>
 
               <div className="envio-card__actions">
                 <button className="btn btn--secondary" onClick={goBack}>
@@ -741,7 +784,7 @@ export default function CrearEnvioPage() {
                 </div>
               </div>
 
-              {parcelCreado.tipoPago === 'REMITENTE' && parcelCreado.estadoPago === 'PENDIENTE' && (
+              {parcelCreado.tipoPago === 'REMITENTE' && parcelCreado.estadoPago === 'PENDIENTE' && parcelCreado.metodoPago !== 'EFECTIVO' && (
                 <div className="dashboard-panel animate-fade-in" style={{ maxWidth: 450, margin: '24px auto', padding: 20, border: '1px dashed var(--accent)', background: 'var(--bg-panel)' }}>
                   <div style={{ textAlign: 'center', marginBottom: 12 }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -798,6 +841,20 @@ export default function CrearEnvioPage() {
                     >
                       {payingQr ? <Loader2 size={16} className="spin" /> : '✓ Simular Pago QR Simple'}
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {parcelCreado.tipoPago === 'REMITENTE' && parcelCreado.estadoPago === 'PENDIENTE' && parcelCreado.metodoPago === 'EFECTIVO' && (
+                <div className="dashboard-panel animate-fade-in" style={{ maxWidth: 450, margin: '24px auto', padding: 16, background: 'rgba(59, 130, 246, 0.05)', border: '1px dashed rgba(59, 130, 246, 0.3)' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                    <span style={{ fontSize: 20 }}>💵</span>
+                    <div style={{ textAlign: 'left' }}>
+                      <h4 style={{ color: 'var(--navy)', fontWeight: 700, fontSize: 14 }}>Pago Pendiente en Origen (Ventanilla)</h4>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.4 }}>
+                        Deberá cancelar el monto de <strong>{parcelCreado.costoEnvio?.toFixed(2)} BOB</strong> en efectivo al momento de entregar físicamente el paquete en nuestras oficinas.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}

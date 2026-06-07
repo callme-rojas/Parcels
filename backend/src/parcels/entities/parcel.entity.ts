@@ -176,6 +176,9 @@ export class Parcel {
   @Field(() => TipoPago, { description: 'Tipo de pago (REMITENTE o DESTINATARIO)' })
   tipoPago!: TipoPago;
 
+  @Field({ nullable: true, description: 'Método de pago (QR o EFECTIVO)' })
+  metodoPago?: string;
+
   // Events
   @Field(() => [ParcelEvent], { nullable: true })
   events?: ParcelEvent[];

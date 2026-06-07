@@ -237,6 +237,7 @@ export class ParcelsService {
         costoEnvio,
         estadoPago: 'PENDIENTE',
         tipoPago: input.tipoPago ?? 'REMITENTE',
+        metodoPago: input.metodoPago ?? null,
         events: {
           create: {
             status: ParcelStatus.REGISTRADO,
@@ -549,13 +550,14 @@ export class ParcelsService {
     return this.toEntity(updated);
   }
 
-  async registrarPago(id: string) {
+  async registrarPago(id: string, metodoPago?: string) {
     await this.findOne(id);
     const updated = await this.prisma.parcel.update({
       where: { id },
       data: {
         estadoPago: 'PAGADO',
         pagadoEn: new Date(),
+        metodoPago: metodoPago || null,
       },
       include: { events: { orderBy: { createdAt: 'asc' } } },
     });

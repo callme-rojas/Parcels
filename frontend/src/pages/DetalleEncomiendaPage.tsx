@@ -681,17 +681,27 @@ export default function DetalleEncomiendaPage() {
                 <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Vence en: 01:59 minutos</span>
               </div>
             </div>
-            <div className="modal__footer" style={{ justifyContent: 'center', gap: 12 }}>
-              <button className="btn btn--secondary" onClick={() => setShowPaymentModal(false)}>
+            <div className="modal__footer" style={{ justifyContent: 'center', gap: 12, flexDirection: 'column', width: '100%' }}>
+              <div style={{ display: 'flex', gap: 12, width: '100%' }}>
+                <button
+                  className="btn btn--primary"
+                  disabled={pagando}
+                  onClick={() => registrarPago({ variables: { id: parcel.id, metodoPago: 'EFECTIVO' } })}
+                  style={{ flex: 1, padding: '10px 8px', fontSize: 13, minWidth: 'auto' }}
+                >
+                  💵 Pago Efectivo
+                </button>
+                <button
+                  className="btn btn--gold animate-pulse"
+                  disabled={pagando}
+                  onClick={() => registrarPago({ variables: { id: parcel.id, metodoPago: 'QR' } })}
+                  style={{ flex: 1, padding: '10px 8px', fontSize: 13, minWidth: 'auto' }}
+                >
+                  📱 Pago QR Simple
+                </button>
+              </div>
+              <button className="btn btn--secondary btn--full" onClick={() => setShowPaymentModal(false)}>
                 Cancelar
-              </button>
-              <button
-                className="btn btn--gold animate-pulse"
-                disabled={pagando}
-                onClick={() => registrarPago({ variables: { id: parcel.id } })}
-                style={{ minWidth: 160 }}
-              >
-                {pagando ? <Loader2 size={15} className="spin" /> : '✓ Confirmar Pago Escaneado'}
               </button>
             </div>
           </div>

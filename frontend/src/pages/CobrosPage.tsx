@@ -42,9 +42,9 @@ export default function CobrosPage() {
     },
   });
 
-  const handlePay = async (id: string) => {
+  const handlePay = async (id: string, metodo: 'EFECTIVO' | 'QR') => {
     try {
-      await registrarPago({ variables: { id } });
+      await registrarPago({ variables: { id, metodoPago: metodo } });
     } catch {
       // Handled by onError
     }
@@ -359,17 +359,27 @@ export default function CobrosPage() {
                 <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>Vence en: 01:59 minutos</span>
               </div>
             </div>
-            <div className="modal__footer" style={{ justifyContent: 'center', gap: 12 }}>
-              <button className="btn btn--secondary" onClick={() => setSelectedParcel(null)}>
+            <div className="modal__footer" style={{ justifyContent: 'center', gap: 12, flexDirection: 'column', width: '100%' }}>
+              <div style={{ display: 'flex', gap: 12, width: '100%' }}>
+                <button
+                  className="btn btn--primary"
+                  disabled={paying}
+                  onClick={() => handlePay(selectedParcel.id, 'EFECTIVO')}
+                  style={{ flex: 1, padding: '10px 8px', fontSize: 13, minWidth: 'auto' }}
+                >
+                  💵 Cobrar Efectivo
+                </button>
+                <button
+                  className="btn btn--gold animate-pulse"
+                  disabled={paying}
+                  onClick={() => handlePay(selectedParcel.id, 'QR')}
+                  style={{ flex: 1, padding: '10px 8px', fontSize: 13, minWidth: 'auto' }}
+                >
+                  📱 Cobrar QR Simple
+                </button>
+              </div>
+              <button className="btn btn--secondary btn--full" onClick={() => setSelectedParcel(null)}>
                 Cancelar
-              </button>
-              <button
-                className="btn btn--gold animate-pulse"
-                disabled={paying}
-                onClick={() => registrarPago({ variables: { id: selectedParcel.id } })}
-                style={{ minWidth: 160 }}
-              >
-                {paying ? <Loader2 size={15} className="spin" /> : '✓ Confirmar Pago Destinatario'}
               </button>
             </div>
           </div>

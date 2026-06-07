@@ -58,6 +58,7 @@ model Parcel {
   largoCm            Float?
   pagadoEn           DateTime?
   tipoPago           TipoPago              @default(REMITENTE)
+  metodoPago         String?
   busAssignments     ParcelBusAssignment[]
   events             ParcelEvent[]
   assignedBus        Bus?                  @relation(fields: [assignedBusId], references: [id])

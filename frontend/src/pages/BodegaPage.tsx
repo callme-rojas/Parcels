@@ -97,7 +97,7 @@ export default function BodegaPage() {
 
   const handleClasificar = async (id: string) => {
     try {
-      await clasificar({ variables: { id } });
+      await clasificar({ variables: { input: { parcelId: id } } });
       notify('Evento de clasificación registrado');
       rRec();
     } catch (e: any) { notify(e.message, true); }
@@ -116,7 +116,7 @@ export default function BodegaPage() {
 
   const handleCarga = async (id: string) => {
     try {
-      await registrarCarga({ variables: { id } });
+      await registrarCarga({ variables: { input: { parcelId: id } } });
       notify('Carga registrada → EN TRÁNSITO');
       rRec();
       rTra();
@@ -125,7 +125,7 @@ export default function BodegaPage() {
 
   const handleDescarga = async (id: string) => {
     try {
-      await registrarDescarga({ variables: { id } });
+      await registrarDescarga({ variables: { input: { parcelId: id } } });
       notify('Descarga registrada → EN DESTINO');
       rTra();
       rDes();
@@ -134,7 +134,7 @@ export default function BodegaPage() {
 
   const handleDisponible = async (id: string) => {
     try {
-      await marcarDisponible({ variables: { id } });
+      await marcarDisponible({ variables: { input: { parcelId: id } } });
       notify('Encomienda marcada como DISPONIBLE para retiro');
       rDes();
     } catch (e: any) { notify(e.message, true); }
@@ -259,11 +259,14 @@ export default function BodegaPage() {
                               onChange={(e) => setSelectedBus(e.target.value)}
                             >
                               <option value="">Seleccionar bus...</option>
-                              {buses.filter(b => b.routeCode === enc.routeCode && b.activo).map(b => (
-                                <option key={b.id} value={b.id}>
-                                  {b.flota} · {b.placa} ({b.capacidad - b.cargados} disp.)
-                                </option>
-                              ))}
+                              {buses.filter(b => b.routeCode === enc.routeCode && b.activo).map(b => {
+                                const isFull = b.cargados >= b.capacidad;
+                                return (
+                                  <option key={b.id} value={b.id} disabled={isFull}>
+                                    {b.flota} · {b.placa} ({isFull ? '0' : b.capacidad - b.cargados} disp. / max {b.capacidad}){isFull ? ' [LLENO]' : ''}
+                                  </option>
+                                );
+                              })}
                             </select>
                             <button className="btn btn--primary btn--sm" disabled={!selectedBus} onClick={() => handleAsignarBus(enc.id)}>OK</button>
                             <button className="btn btn--secondary btn--sm" onClick={() => setAsignandoId(null)}>✕</button>

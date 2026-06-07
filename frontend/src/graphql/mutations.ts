@@ -111,11 +111,12 @@ export const TOGGLE_SUCURSAL_ACTIVA_MUTATION = gql`
 `;
 
 export const REGISTRAR_PAGO_MUTATION = gql`
-  mutation RegistrarPago($id: ID!) {
-    registrarPago(id: $id) {
+  mutation RegistrarPago($id: ID!, $metodoPago: String) {
+    registrarPago(id: $id, metodoPago: $metodoPago) {
       id
       estadoPago
       pagadoEn
+      metodoPago
     }
   }
 `;
@@ -144,6 +145,7 @@ export const CREATE_PARCEL_MUTATION = gql`
       costoEnvio
       estadoPago
       tipoPago
+      metodoPago
       createdAt
     }
   }
@@ -171,6 +173,7 @@ export const CREATE_PARCEL_AUTH_MUTATION = gql`
       costoEnvio
       estadoPago
       tipoPago
+      metodoPago
       createdAt
     }
   }
@@ -230,8 +233,8 @@ export const CREATE_BUS_MUTATION = gql`
 // ─── Bodega Mutations (Fase 2 y 3) ──────────────────────────
 
 export const CLASIFICAR_ENCOMIENDA = gql`
-  mutation Clasificar($id: ID!) {
-    clasificarEncomienda(id: $id) {
+  mutation Clasificar($input: ParcelActionInput!) {
+    clasificarEncomienda(input: $input) {
       id
       trackingNumber
       status
@@ -253,8 +256,8 @@ export const ASIGNAR_BUS = gql`
 `;
 
 export const REGISTRAR_CARGA = gql`
-  mutation RegistrarCarga($id: ID!) {
-    registrarCarga(id: $id) {
+  mutation RegistrarCarga($input: ParcelActionInput!) {
+    registrarCarga(input: $input) {
       id
       trackingNumber
       status
@@ -263,8 +266,8 @@ export const REGISTRAR_CARGA = gql`
 `;
 
 export const REGISTRAR_DESCARGA = gql`
-  mutation RegistrarDescarga($id: ID!) {
-    registrarDescarga(id: $id) {
+  mutation RegistrarDescarga($input: ParcelActionInput!) {
+    registrarDescarga(input: $input) {
       id
       trackingNumber
       status
@@ -273,8 +276,8 @@ export const REGISTRAR_DESCARGA = gql`
 `;
 
 export const MARCAR_DISPONIBLE = gql`
-  mutation MarcarDisponible($id: ID!) {
-    marcarDisponible(id: $id) {
+  mutation MarcarDisponible($input: ParcelActionInput!) {
+    marcarDisponible(input: $input) {
       id
       trackingNumber
       status

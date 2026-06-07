@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useAuthStore } from '../stores/authStore';
+import { Rol } from '../types';
 import {
   HelpCircle,
   BookOpen,
@@ -119,10 +121,24 @@ const GUIDES: Record<string, RoleGuide> = {
 };
 
 export default function AyudaPage() {
-  const [activeTab, setActiveTab] = useState<string>('cliente');
+  const user = useAuthStore((s) => s.user);
+
+  // Map user role to the GUIDE key
+  const getRoleKey = () => {
+    if (!user) return 'cliente';
+    switch (user.rol) {
+      case Rol.ADMINISTRADOR: return 'admin';
+      case Rol.TAQUILLA: return 'taquilla';
+      case Rol.BODEGA: return 'bodega';
+      case Rol.CLIENTE: return 'cliente';
+      default: return 'cliente';
+    }
+  };
+
+  const roleKey = getRoleKey();
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(null);
 
-  const guide = GUIDES[activeTab];
+  const guide = GUIDES[roleKey];
 
   return (
     <div className="panel-page">
@@ -213,38 +229,7 @@ export default function AyudaPage() {
         </div>
       </div>
 
-      <div className="ayuda-layout">
-        {/* Left Side: Navigation Tabs */}
-        <div className="ayuda-menu">
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, paddingLeft: 8, marginBottom: 4 }}>
-            Guías por Rol
-          </span>
-          <button
-            className={`ayuda-tab ${activeTab === 'cliente' ? 'ayuda-tab--active' : 'ayuda-tab--inactive'}`}
-            onClick={() => { setActiveTab('cliente'); setOpenFaqIdx(null); }}
-          >
-            <User size={16} /> Clientes
-          </button>
-          <button
-            className={`ayuda-tab ${activeTab === 'taquilla' ? 'ayuda-tab--active' : 'ayuda-tab--inactive'}`}
-            onClick={() => { setActiveTab('taquilla'); setOpenFaqIdx(null); }}
-          >
-            <ScanBarcode size={16} /> Personal Taquilla
-          </button>
-          <button
-            className={`ayuda-tab ${activeTab === 'bodega' ? 'ayuda-tab--active' : 'ayuda-tab--inactive'}`}
-            onClick={() => { setActiveTab('bodega'); setOpenFaqIdx(null); }}
-          >
-            <Truck size={16} /> Personal Bodega
-          </button>
-          <button
-            className={`ayuda-tab ${activeTab === 'admin' ? 'ayuda-tab--active' : 'ayuda-tab--inactive'}`}
-            onClick={() => { setActiveTab('admin'); setOpenFaqIdx(null); }}
-          >
-            <Users size={16} /> Administradores
-          </button>
-        </div>
-
+      <div className="ayuda-layout" style={{ gridTemplateColumns: '1fr' }}>
         {/* Right Side: Guide Content */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div className="dashboard-panel">

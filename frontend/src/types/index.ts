@@ -105,6 +105,7 @@ export interface Parcel {
   estadoPago: EstadoPago;
   pagadoEn?: string;
   tipoPago: TipoPago;
+  metodoPago?: string;
 
   // Asignación a bus
   assignedBusId?: string;
@@ -154,6 +155,7 @@ export interface CreateParcelInput {
   categoria?: CategoriaContenido;
   esFragil?: boolean;
   tipoPago?: TipoPago;
+  metodoPago?: string;
 }
 
 export interface UpdateParcelStatusInput {

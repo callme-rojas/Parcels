@@ -333,7 +333,15 @@ export default function TaquillaPage() {
                     <p style={{ fontSize: 14 }}>Seleccione una encomienda para verificar la identidad.</p>
                   </div>
                 ) : (() => {
-                  const enc = disponibles.find(e => e.id === selectedRetiro)!;
+                  const enc = disponibles.find(e => e.id === selectedRetiro) || todas.find(e => e.id === selectedRetiro);
+                  if (!enc) {
+                    return (
+                      <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
+                        <Loader2 className="spin" size={24} style={{ margin: '0 auto 12px', display: 'block' }} />
+                        <p style={{ fontSize: 14 }}>Cargando datos de la encomienda...</p>
+                      </div>
+                    );
+                  }
                   return (
                     <div className="taq-verificacion">
                       <div className="taq-verificacion__datos">
@@ -351,6 +359,7 @@ export default function TaquillaPage() {
                           className="form-input"
                           placeholder="Ej: 7345678"
                           value={retiroCI}
+                          disabled={retiroResult === 'success'}
                           onChange={(e) => { setRetiroCI(e.target.value); setRetiroResult(null); }}
                         />
                       </div>
@@ -374,14 +383,27 @@ export default function TaquillaPage() {
                         </div>
                       )}
 
-                      <button
-                        className="btn btn--gold btn--full"
-                        onClick={handleConfirmRetiro}
-                        disabled={!retiroCI.trim() || confirmando || retiroResult === 'success'}
-                      >
-                        {confirmando ? <Loader2 size={16} className="spin" /> : <UserCheck size={16} />}
-                        {confirmando ? 'Verificando...' : 'Confirmar retiro'}
-                      </button>
+                      {retiroResult === 'success' ? (
+                        <button
+                          className="btn btn--primary btn--full"
+                          onClick={() => {
+                            setSelectedRetiro(null);
+                            setRetiroResult(null);
+                            setRetiroCI('');
+                          }}
+                        >
+                          Entregar otra encomienda
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn--gold btn--full"
+                          onClick={handleConfirmRetiro}
+                          disabled={!retiroCI.trim() || confirmando}
+                        >
+                          {confirmando ? <Loader2 size={16} className="spin" /> : <UserCheck size={16} />}
+                          {confirmando ? 'Verificando...' : 'Confirmar retiro'}
+                        </button>
+                      )}
                     </div>
                   );
                 })()}
