@@ -235,21 +235,17 @@ type IndicadoresOperativos {
   fechaDesde: DateTime!
   fechaHasta: DateTime!
 
-  """Entregadas / registradas × 100"""
-  tasaEntregaExitosa: Float!
-
-  """Cantidad de etiquetas vendidas (pagadas)"""
-  totalVentaEtiquetas: Int!
-
-  """Monto total de dinero en encomiendas registradas"""
-  montoTotalRegistrado: Float!
-
   """Monto total recaudado (pagado)"""
   montoTotalPagado: Float!
 
   """Monto total pendiente de cobro"""
   montoTotalPendiente: Float!
 
+  """Monto total de dinero en encomiendas registradas"""
+  montoTotalRegistrado: Float!
+
+  """Entregadas / registradas × 100"""
+  tasaEntregaExitosa: Float!
   totalCanceladas: Int!
   totalDisponibles: Int!
   totalEnDestino: Int!
@@ -259,6 +255,9 @@ type IndicadoresOperativos {
 
   """Encomiendas creadas en el período"""
   totalRegistradas: Int!
+
+  """Cantidad de etiquetas vendidas (pagadas)"""
+  totalVentaEtiquetas: Int!
 }
 
 input LoginInput {
