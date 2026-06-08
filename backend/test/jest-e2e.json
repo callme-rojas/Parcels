@@ -9,5 +9,15 @@
   "collectCoverageFrom": [
     "src/**/*.(t|j)s"
   ],
-  "coverageDirectory": "coverage"
+  "coverageDirectory": "coverage",
+  "reporters": [
+    "default",
+    ["jest-html-reporter", {
+      "pageTitle": "Reporte de Pruebas E2E - API GraphQL Travell",
+      "outputPath": "./test-report.html",
+      "includeFailureMsg": true,
+      "includeConsoleLog": true,
+      "theme": "darkTheme"
+    }]
+  ]
 }
