@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Plus,
   Search,
+  X,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
@@ -115,7 +116,12 @@ const rolLabels: Record<Rol, string> = {
   [Rol.CLIENTE]: 'Usuario',
 };
 
-export default function Sidebar() {
+interface SidebarProps {
+  mobileOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const [collapsed, setCollapsed] = useState(false);
@@ -123,7 +129,7 @@ export default function Sidebar() {
   const sections = user ? NAV_BY_ROLE[user.rol] || [] : [];
 
   return (
-    <aside className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''}`}>
+    <aside className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''} ${mobileOpen ? 'sidebar--mobile-open' : ''}`}>
       {/* Brand */}
       <div className="sidebar__brand">
         <div className="sidebar__logo">
@@ -135,6 +141,8 @@ export default function Sidebar() {
             <span className="sidebar__brand-sub">Encomiendas</span>
           </div>
         )}
+        
+        {/* Toggle Button for Desktop / Close Button for Mobile */}
         <button
           className="sidebar__toggle"
           onClick={() => setCollapsed(!collapsed)}
@@ -142,6 +150,27 @@ export default function Sidebar() {
         >
           {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
         </button>
+
+        {onClose && (
+          <button
+            className="sidebar__close-mobile"
+            onClick={onClose}
+            aria-label="Cerrar menú"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              display: 'none', // Mostrar en móviles mediante CSS
+              padding: '4px',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginLeft: 'auto'
+            }}
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -159,6 +188,7 @@ export default function Sidebar() {
                   `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
                 }
                 title={collapsed ? item.label : undefined}
+                onClick={onClose}
               >
                 <span className="sidebar__link-icon">{item.icon}</span>
                 {!collapsed && (
@@ -185,7 +215,14 @@ export default function Sidebar() {
             )}
           </div>
         )}
-        <button className="sidebar__logout" onClick={logout} title="Cerrar sesión">
+        <button
+          className="sidebar__logout"
+          onClick={() => {
+            if (onClose) onClose();
+            logout();
+          }}
+          title="Cerrar sesión"
+        >
           <LogOut size={18} />
           {!collapsed && <span>Cerrar sesión</span>}
         </button>

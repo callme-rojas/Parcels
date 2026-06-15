@@ -1,5 +1,5 @@
 import { useAuthStore } from '../../stores/authStore';
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, Menu } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -19,7 +19,11 @@ const PAGE_TITLES: Record<string, string> = {
   '/crear-envio': 'Nuevo Envío',
 };
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const user = useAuthStore((s) => s.user);
   const location = useLocation();
 
@@ -28,8 +32,28 @@ export default function Header() {
 
   return (
     <header className="topbar">
-      <div className="topbar__left">
-        <h1 className="topbar__title">{pageTitle}</h1>
+      <div className="topbar__left" style={{ display: 'flex', alignItems: 'center' }}>
+        {onMenuClick && (
+          <button
+            className="topbar__menu-toggle"
+            onClick={onMenuClick}
+            aria-label="Abrir menú"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              display: 'none', // Mostrar por CSS en pantallas móviles
+              padding: '6px',
+              marginRight: '8px',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Menu size={22} />
+          </button>
+        )}
+        <h1 className="topbar__title" style={{ fontSize: '18px', fontWeight: 700 }}>{pageTitle}</h1>
       </div>
       <div className="topbar__right">
         <div className="topbar__search">
