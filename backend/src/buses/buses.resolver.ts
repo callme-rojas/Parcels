@@ -67,6 +67,16 @@ export class BusesResolver {
     return this.busesService.ubicacionPorEncomienda(parcelId);
   }
 
+  @Query(() => [BusLocation], {
+    name: 'historialUbicacionesBus',
+    description: 'Historial de hasta 24 posiciones GPS del bus asignado a una encomienda (pública)',
+  })
+  historialUbicacionesBus(
+    @Args('parcelId', { type: () => ID }) parcelId: string,
+  ): Promise<BusLocation[]> {
+    return this.busesService.historialUbicacionesBus(parcelId);
+  }
+
   @UseGuards(GqlAuthGuard, RolesGuard)
   @Roles(Rol.ADMINISTRADOR)
   @Mutation(() => Bus, { description: 'Registrar un bus en la flota' })

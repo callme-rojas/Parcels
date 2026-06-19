@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   Package, Search, Clock, ScanBarcode, CheckCircle2,
-  MapPin, Loader2, AlertCircle,
+  MapPin, Loader2, AlertCircle, Navigation,
 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
-import { useLazyQuery } from '@apollo/client/react';
-import { GET_PARCEL_BY_TRACKING } from '../graphql/queries';
+import { useLazyQuery, useQuery } from '@apollo/client/react';
+import { GET_PARCEL_BY_TRACKING, GET_HISTORIAL_UBICACIONES_BUS } from '../graphql/queries';
 import { useBusLocation } from '../hooks/useBusLocation';
 import { ESTADO_CONFIG } from '../types';
 import type { Parcel } from '../types';
@@ -35,13 +35,26 @@ function ResultCard({ parcel }: { parcel: Parcel }) {
   const badge = estadoBadge[parcel.status] ?? { label: parcel.status, className: 'badge' };
   const events = parcel.events ?? [];
   const isEnTransito = parcel.status === 'EN_TRANSITO';
+  const isEntregado = parcel.status === 'ENTREGADO';
+
+  // Fetch GPS history for active parcels (in transit or nearby states)
+  const showGpsHistory = ['EN_TRANSITO', 'EN_DESTINO', 'DISPONIBLE', 'ENTREGADO'].includes(parcel.status);
+  const { data: gpsData } = useQuery<{ historialUbicacionesBus: any[] }>(
+    GET_HISTORIAL_UBICACIONES_BUS,
+    {
+      variables: { parcelId: parcel.id },
+      skip: !showGpsHistory,
+      fetchPolicy: 'cache-and-network',
+    }
+  );
+  const gpsHistory = gpsData?.historialUbicacionesBus ?? [];
 
   const { location: busLocation } = useBusLocation(
     isEnTransito ? parcel.id : undefined,
     30_000,
   );
 
-  const showMap = ['EN_TRANSITO', 'EN_DESTINO', 'DISPONIBLE', 'ENTREGADO'].includes(parcel.status);
+  const showMap = showGpsHistory;
 
   return (
     <>
@@ -137,7 +150,9 @@ function ResultCard({ parcel }: { parcel: Parcel }) {
             ) : (
               <div className="rastreo-timeline">
                 {events.map((ev, i) => {
-                  const isCurrent = i === events.length - 1;
+                  const isLast = i === events.length - 1;
+                  // If parcel is fully delivered, all events including last are 'done' (green)
+                  const isCurrent = isLast && !isEntregado;
                   const isDone = !isCurrent;
                   const evBadge = estadoBadge[ev.status];
                   return (
@@ -158,6 +173,31 @@ function ResultCard({ parcel }: { parcel: Parcel }) {
                     </div>
                   );
                 })}
+
+                {/* ── GPS Snapshots ─────────────────────── */}
+                {gpsHistory.length > 0 && (
+                  <>
+                    <div className="rastreo-timeline__gps-header">
+                      <Navigation size={13} style={{ color: 'var(--accent)' }} />
+                      <span>Posiciones GPS registradas ({gpsHistory.length})</span>
+                    </div>
+                    {gpsHistory.map((gps: any, idx: number) => (
+                      <div key={`gps-${idx}`} className="rastreo-timeline__item rastreo-timeline__item--gps">
+                        <div className="rastreo-timeline__dot rastreo-timeline__dot--gps">
+                          <Navigation size={8} style={{ color: 'white' }} />
+                        </div>
+                        <div className="rastreo-timeline__content">
+                          <strong style={{ fontSize: 12, color: 'var(--accent)' }}>📍 En ruta</strong>
+                          <span className="rastreo-timeline__detail">
+                            {gps.lat.toFixed(4)}°, {gps.lng.toFixed(4)}°
+                            {gps.velocidad ? ` · ${Math.round(gps.velocidad)} km/h` : ''}
+                          </span>
+                        </div>
+                        <span className="rastreo-timeline__date">{fmt(gps.recordedAt)}</span>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -171,7 +211,8 @@ function ResultCard({ parcel }: { parcel: Parcel }) {
             <h3>Historial de eventos</h3>
             <div className="rastreo-timeline">
               {events.map((ev, i) => {
-                const isCurrent = i === events.length - 1;
+                const isLast = i === events.length - 1;
+                const isCurrent = isLast && !isEntregado;
                 const isDone = !isCurrent;
                 return (
                   <div
@@ -273,7 +314,7 @@ export default function RastreoPublicoPage() {
             <span className="rastreo-hero__highlight">Santa Cruz · Puerto Quijarro</span>
           </h1>
           <p className="rastreo-hero__desc">
-            Ingresa tu número de rastreo o escanea el código PDF417 de la etiqueta.
+            Ingresa tu número de rastreo o escanea el código de barras de la etiqueta.
             Sigue el bus en el mapa en tiempo real, sin llamadas ni colas.
           </p>
 
@@ -297,7 +338,7 @@ export default function RastreoPublicoPage() {
             <button
               type="button"
               className="btn btn--secondary"
-              title="Escanear código PDF417"
+              title="Escanear código de barras"
               onClick={() => setShowScanner(true)}
             >
               <ScanBarcode size={18} /> Escanear

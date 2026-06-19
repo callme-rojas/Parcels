@@ -198,6 +198,30 @@ export class BusesService {
     return this.ultimaUbicacion(parcel.assignedBusId);
   }
 
+  /** Returns up to 24 GPS snapshots for the bus assigned to a parcel (oldest first). */
+  async historialUbicacionesBus(parcelId: string): Promise<BusLocation[]> {
+    const parcel = await this.prisma.parcel.findUnique({
+      where: { id: parcelId },
+      select: { assignedBusId: true },
+    });
+
+    if (!parcel?.assignedBusId) return [];
+
+    const events = await this.prisma.busTrackingEvent.findMany({
+      where: { busId: parcel.assignedBusId },
+      orderBy: { recordedAt: 'asc' },
+      take: 24,
+    });
+
+    return events.map((e) => ({
+      busId: e.busId,
+      lat: e.lat,
+      lng: e.lng,
+      velocidad: e.velocidad ?? undefined,
+      recordedAt: e.recordedAt,
+    }));
+  }
+
   async markAssignmentLoaded(parcelId: string): Promise<void> {
     await this.prisma.parcelBusAssignment.updateMany({
       where: { parcelId, isActive: true, loadedAt: null },

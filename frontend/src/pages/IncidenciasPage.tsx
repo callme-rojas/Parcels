@@ -9,7 +9,8 @@ import {
   Filter,
   Trash2,
   Eye,
-  CheckSquare
+  CheckSquare,
+  Printer,
 } from 'lucide-react';
 
 interface Incidencia {
@@ -216,6 +217,9 @@ export default function IncidenciasPage() {
           </p>
         </div>
         <div className="enc-header__actions">
+          <button className="btn btn--secondary" onClick={() => window.print()} title="Imprimir listado de incidencias">
+            <Printer size={16} /> Imprimir
+          </button>
           <button className="btn btn--primary" onClick={() => setShowCreateModal(true)}>
             <Plus size={16} /> Registrar Incidencia
           </button>

@@ -223,6 +223,18 @@ export const GET_UBICACION_BUS_POR_ENCOMIENDA = gql`
   }
 `;
 
+export const GET_HISTORIAL_UBICACIONES_BUS = gql`
+  query HistorialUbicacionesBus($parcelId: ID!) {
+    historialUbicacionesBus(parcelId: $parcelId) {
+      busId
+      lat
+      lng
+      velocidad
+      recordedAt
+    }
+  }
+`;
+
 export const GET_RESUMEN_DASHBOARD = gql`
   query ResumenDashboard {
     resumenDashboard {

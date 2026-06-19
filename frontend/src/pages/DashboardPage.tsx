@@ -7,9 +7,12 @@ import {
   TrendingUp,
   MapPin,
   AlertCircle,
-  Loader2
+  Loader2,
+  DollarSign,
+  Award,
+  XCircle,
 } from 'lucide-react';
-import { GET_RESUMEN_DASHBOARD } from '../graphql/queries';
+import { GET_RESUMEN_DASHBOARD, GET_INDICADORES_OPERATIVOS } from '../graphql/queries';
 
 function formatTimeAgo(dateString: string) {
   const date = new Date(dateString);
@@ -37,8 +40,16 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 export default function DashboardPage() {
   const { data, loading, error } = useQuery<{ resumenDashboard: any }>(GET_RESUMEN_DASHBOARD, {
     fetchPolicy: 'cache-and-network',
-    pollInterval: 30000, // Refresh every 30 seconds
+    pollInterval: 30000,
   });
+
+  const { data: indData } = useQuery<{ indicadoresOperativos: any }>(GET_INDICADORES_OPERATIVOS, {
+    variables: { filter: {} }, // last 30 days by default
+    fetchPolicy: 'cache-and-network',
+    pollInterval: 60000,
+  });
+
+  const ind = indData?.indicadoresOperativos;
 
   if (loading && !data) {
     return (
@@ -100,6 +111,42 @@ export default function DashboardPage() {
           <div className="kpi-card__label">Disponibles Retiro (Global)</div>
         </div>
       </section>
+
+      {/* ── Operational KPIs (30 days) ───────────────────── */}
+      {ind && (
+        <section style={{ padding: '0 0 4px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, paddingLeft: 2 }}>
+            Indicadores Últimos 30 días
+          </div>
+          <div className="dashboard__kpis" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+            <div className="kpi-card kpi-card--emerald">
+              <div className="kpi-card__header"><span className="kpi-card__icon"><TrendingUp size={20} /></span></div>
+              <div className="kpi-card__value">{ind.tasaEntregaExitosa}%</div>
+              <div className="kpi-card__label">Tasa de Éxito</div>
+            </div>
+            <div className="kpi-card kpi-card--blue">
+              <div className="kpi-card__header"><span className="kpi-card__icon"><DollarSign size={20} /></span></div>
+              <div className="kpi-card__value" style={{ fontSize: 20 }}>{(ind.montoTotalPagado ?? 0).toFixed(0)} Bs</div>
+              <div className="kpi-card__label">Recaudado</div>
+            </div>
+            <div className="kpi-card kpi-card--amber">
+              <div className="kpi-card__header"><span className="kpi-card__icon"><Clock size={20} /></span></div>
+              <div className="kpi-card__value" style={{ fontSize: 20 }}>{(ind.montoTotalPendiente ?? 0).toFixed(0)} Bs</div>
+              <div className="kpi-card__label">Pendiente de Cobro</div>
+            </div>
+            <div className="kpi-card kpi-card--purple">
+              <div className="kpi-card__header"><span className="kpi-card__icon"><Award size={20} /></span></div>
+              <div className="kpi-card__value">{ind.totalVentaEtiquetas ?? 0}</div>
+              <div className="kpi-card__label">Etiquetas Vendidas</div>
+            </div>
+            <div className="kpi-card" style={{ borderColor: 'var(--danger)' }}>
+              <div className="kpi-card__header"><span className="kpi-card__icon" style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--danger)' }}><XCircle size={20} /></span></div>
+              <div className="kpi-card__value" style={{ color: 'var(--danger)' }}>{ind.totalCanceladas ?? 0}</div>
+              <div className="kpi-card__label">Canceladas</div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Charts Row */}
       <section className="dashboard__charts">

@@ -1523,6 +1523,33 @@ body {
   white-space: nowrap;
 }
 
+/* GPS timeline entries */
+.rastreo-timeline__item--gps .rastreo-timeline__dot--gps {
+  background: var(--accent, #C9A84C);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rastreo-timeline__item--gps::before {
+  background: color-mix(in srgb, var(--accent, #C9A84C) 40%, transparent);
+}
+
+.rastreo-timeline__gps-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 4px;
+  padding: 6px 10px;
+  background: color-mix(in srgb, var(--accent, #C9A84C) 10%, transparent);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent, #C9A84C);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Steps */
 .rastreo-steps {
   display: grid;
@@ -3280,7 +3307,7 @@ select.form-input {
 @media print {
   @page {
     margin: 0.5cm;
-    size: portrait;
+    size: landscape;
   }
 
   /* Reset layout for print */
@@ -3295,12 +3322,12 @@ select.form-input {
     overflow: visible !important;
   }
 
-  /* Hide screen-only containers by default */
+  /* Hide everything by default */
   body * {
     visibility: hidden !important;
   }
 
-  /* Make only the label/manifest visible */
+  /* ── Label printing ──────────────────────────────── */
   .envio-label,
   .envio-label *,
   .manifest-print-area,
@@ -3308,10 +3335,38 @@ select.form-input {
     visibility: visible !important;
   }
 
-  /* Reset layout wrappers to collapse screen positioning space and allow clean flow */
+  /* ── Reportes printing ───────────────────────────── */
+  #reportes-page .dashboard-panel,
+  #reportes-page .dashboard-panel * {
+    visibility: visible !important;
+    display: revert !important;
+  }
+
+  #reportes-page {
+    visibility: visible !important;
+    position: static !important;
+  }
+
+  /* Hide navigation and controls in reportes print */
+  #reportes-page .dashboard-panel__header .btn,
+  #reportes-page .taq-actions,
+  #reportes-page .form-group,
+  #reportes-page [style*="overflow-x"] table thead + * button {
+    display: none !important;
+  }
+
+  /* ── Incidencias printing ────────────────────────── */
+  .incidencias-print-area,
+  .incidencias-print-area * {
+    visibility: visible !important;
+  }
+
+  /* Layout wrappers – collapse screen-only positioning */
   .app-layout,
   .app-layout__main,
+  .app-layout__sidebar,
   .app-layout__content,
+  .app-topbar,
   main,
   .panel-page,
   .modal-overlay,
@@ -3332,7 +3387,11 @@ select.form-input {
     transform: none !important;
   }
 
-  /* Display print-only wrapper */
+  /* Sidebar hidden on print */
+  .app-layout__sidebar {
+    display: none !important;
+  }
+
   .print-only {
     display: block !important;
     visibility: visible !important;
@@ -3353,7 +3412,6 @@ select.form-input {
     page-break-inside: avoid !important;
   }
 
-  /* High contrast styling for barcode and text fields */
   .envio-label,
   .envio-label__header,
   .envio-label__code,
@@ -3381,7 +3439,7 @@ select.form-input {
     color: #333333 !important;
   }
 
-  /* Hide screen actions and other secondary blocks */
+  /* Hide screen actions and secondary blocks */
   button,
   .btn,
   .no-print,
@@ -3391,9 +3449,7 @@ select.form-input {
   .detalle-header,
   .envio-card__title,
   .envio-card__desc,
-  .taq-scan-result,
-  .dashboard-panel,
-  .dashboard-panel * {
+  .taq-scan-result {
     display: none !important;
   }
 }
