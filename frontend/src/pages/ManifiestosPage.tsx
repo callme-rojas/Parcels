@@ -82,6 +82,7 @@ export default function ManifiestosPage() {
             visibility: visible;
           }
           .manifest-print-area {
+            display: block !important;
             position: absolute;
             left: 0;
             top: 0;

@@ -265,7 +265,7 @@ export class ParcelsService {
   private async transitionTo(
     parcelId: string,
     newStatus: ParcelStatus,
-    usuarioId: string | undefined,
+    usuarioId?: string,
     note?: string,
     extraData: Record<string, unknown> = {},
   ): Promise<Parcel> {
@@ -275,11 +275,20 @@ export class ParcelsService {
     const deliveredAt =
       newStatus === ParcelStatus.ENTREGADO ? new Date() : undefined;
 
+    const autoPay =
+      (newStatus === ParcelStatus.RECEPCIONADO &&
+        parcel.tipoPago === 'REMITENTE' &&
+        parcel.estadoPago === 'PENDIENTE') ||
+      (newStatus === ParcelStatus.ENTREGADO &&
+        parcel.tipoPago === 'DESTINATARIO' &&
+        parcel.estadoPago === 'PENDIENTE');
+
     const updated = await this.prisma.parcel.update({
       where: { id: parcel.id },
       data: {
         status: newStatus,
         ...(deliveredAt ? { deliveredAt } : {}),
+        ...(autoPay ? { estadoPago: 'PAGADO', pagadoEn: new Date(), metodoPago: parcel.metodoPago || 'EFECTIVO' } : {}),
         ...extraData,
         events: {
           create: {
@@ -531,23 +540,12 @@ export class ParcelsService {
       );
     }
 
-    const updated = await this.prisma.parcel.update({
-      where: { id: parcel.id },
-      data: {
-        status: ParcelStatus.ENTREGADO,
-        deliveredAt: new Date(),
-        events: {
-          create: {
-            status: ParcelStatus.ENTREGADO,
-            note: `Entregada al destinatario. CI verificado: ${input.recipientCi}`,
-            usuarioId: usuarioId ?? null,
-          },
-        },
-      },
-      include: { events: { orderBy: { createdAt: 'asc' } } },
-    });
-
-    return this.toEntity(updated);
+    return this.transitionTo(
+      parcel.id,
+      ParcelStatus.ENTREGADO,
+      usuarioId,
+      `Entregada al destinatario. CI verificado: ${input.recipientCi}`,
+    );
   }
 
   async registrarPago(id: string, metodoPago?: string) {

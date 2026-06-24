@@ -2655,14 +2655,42 @@ body {
 
   .rastreo-hero {
     grid-template-columns: 1fr;
+    padding: 32px 16px;
+    gap: 20px;
+  }
+
+  .rastreo-hero__title {
+    font-size: 22px;
   }
 
   .rastreo-search {
     flex-direction: column;
+    width: 100%;
+  }
+
+  .rastreo-search__input {
+    width: 100%;
+  }
+
+  .rastreo-search button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rastreo-result {
+    padding: 16px;
+  }
+
+  .rastreo-result__grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 
   .rastreo-timeline-section {
     grid-template-columns: 1fr;
+    padding: 16px;
+    margin-top: 16px;
+    gap: 16px;
   }
 
   .rastreo-steps {
@@ -2670,7 +2698,22 @@ body {
   }
 
   .rastreo-stats-bar {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .rastreo-nav {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 16px;
+    align-items: center;
+  }
+
+  .rastreo-nav__links {
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .detalle-grid {
