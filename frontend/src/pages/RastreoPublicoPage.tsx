@@ -51,7 +51,7 @@ function ResultCard({ parcel }: { parcel: Parcel }) {
 
   const { location: busLocation } = useBusLocation(
     isEnTransito ? parcel.id : undefined,
-    30_000,
+    3_000,
   );
 
   const showMap = showGpsHistory;

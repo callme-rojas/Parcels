@@ -99,18 +99,18 @@ export default function IncidenciasPage() {
 
   // Load from LocalStorage or initialize with mock data
   useEffect(() => {
-    const stored = localStorage.getItem('travell_incidencias');
+    const stored = localStorage.getItem('encomiendas_incidencias');
     if (stored) {
       setIncidencias(JSON.parse(stored));
     } else {
       setIncidencias(INITIAL_MOCK_INCIDENCIAS);
-      localStorage.setItem('travell_incidencias', JSON.stringify(INITIAL_MOCK_INCIDENCIAS));
+      localStorage.setItem('encomiendas_incidencias', JSON.stringify(INITIAL_MOCK_INCIDENCIAS));
     }
   }, []);
 
   const saveToStorage = (list: Incidencia[]) => {
     setIncidencias(list);
-    localStorage.setItem('travell_incidencias', JSON.stringify(list));
+    localStorage.setItem('encomiendas_incidencias', JSON.stringify(list));
   };
 
   const handleCreate = (e: React.FormEvent) => {

@@ -71,7 +71,7 @@ function ParcelSidebar({
 
 // ── Vista de mapa activo (con encomienda seleccionada) ──────────
 function MapPanel({ parcel }: { parcel: Parcel }) {
-  const { location, loading } = useBusLocation(parcel.id, 20_000);
+  const { location, loading } = useBusLocation(parcel.id, 3_000);
 
   function fmt(iso?: string | null) {
     if (!iso) return '—';

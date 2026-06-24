@@ -483,6 +483,11 @@ type Query {
   """Generar código de barra PDF417 en base64 para una encomienda"""
   generarEtiqueta(parcelId: String!): String!
 
+  """
+  Historial de hasta 24 posiciones GPS del bus asignado a una encomienda (pública)
+  """
+  historialUbicacionesBus(parcelId: ID!): [BusLocation!]!
+
   """KPIs agregados por período (default últimos 30 días)"""
   indicadoresOperativos(filter: IndicadoresFilterInput): IndicadoresOperativos!
   me: User!

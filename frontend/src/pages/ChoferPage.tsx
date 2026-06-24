@@ -8,46 +8,47 @@ import type { Bus, RegistrarCoordenadaBusInput } from '../types';
 // Coordenadas reales de parada en carretera de la Ruta Nacional 4 en Bolivia
 const PUNTOS_RUTA: Record<string, { name: string; lat: number; lng: number }[]> = {
   'SCZ-PQA': [
-    { name: 'Santa Cruz (Terminal)', lat: -17.7897, lng: -63.1594 },
-    { name: 'Cotoca', lat: -17.7554, lng: -63.0645 },
-    { name: 'Pailón', lat: -17.6583, lng: -62.7239 },
-    { name: 'Tres Cruces', lat: -17.7812, lng: -62.1583 },
-    { name: 'San José de Chiquitos', lat: -17.8427, lng: -60.7423 },
-    { name: 'Taperas', lat: -17.9547, lng: -60.1254 },
-    { name: 'Roboré', lat: -18.3341, lng: -59.7548 },
-    { name: 'Santiago de Chiquitos', lat: -18.3414, lng: -59.5992 },
-    { name: 'El Carmen Rivero Torres', lat: -18.8242, lng: -58.6253 },
-    { name: 'Puerto Suárez', lat: -18.9669, lng: -57.7972 },
-    { name: 'Puerto Quijarro (Frontera)', lat: -19.0069, lng: -57.7289 },
+    { name: 'Terminal Bimodal SCZ', lat: -17.789187255491594, lng: -63.162212227495424 },
+    { name: 'Cotoca', lat: -17.762744853257733, lng: -62.99207173328154 },
+    { name: 'Pailón', lat: -17.654195926372626, lng: -62.72057070864838 },
+    { name: 'Tres Cruces', lat: -17.60216743270073, lng: -62.22640763588963 },
+    { name: 'San José de Chiquitos', lat: -17.821017140143574, lng: -60.74397685301761 },
+    { name: 'Taperas', lat: -17.908251650076394, lng: -60.36953735479581 },
+    { name: 'Roboré', lat: -18.346763244843352, lng: -59.758742688516655 },
+    { name: 'Aguas Calientes', lat: -18.44779789816133, lng: -59.502739343186164 },
+    { name: 'El Carmen', lat: -18.817151689480497, lng: -58.62602157177211 },
+    { name: 'Puerto Suárez', lat: -18.985130970648314, lng: -57.79418086476951 },
+    { name: 'Puerto Quijarro', lat: -19.010028580919684, lng: -57.73605286681477 },
   ],
   'SCZ-ROB': [
-    { name: 'Santa Cruz (Terminal)', lat: -17.7897, lng: -63.1594 },
-    { name: 'Cotoca', lat: -17.7554, lng: -63.0645 },
-    { name: 'Pailón', lat: -17.6583, lng: -62.7239 },
-    { name: 'Tres Cruces', lat: -17.7812, lng: -62.1583 },
-    { name: 'San José de Chiquitos', lat: -17.8427, lng: -60.7423 },
-    { name: 'Roboré (Terminal)', lat: -18.3341, lng: -59.7548 },
+    { name: 'Terminal Bimodal SCZ', lat: -17.789187255491594, lng: -63.162212227495424 },
+    { name: 'Cotoca', lat: -17.762744853257733, lng: -62.99207173328154 },
+    { name: 'Pailón', lat: -17.654195926372626, lng: -62.72057070864838 },
+    { name: 'Tres Cruces', lat: -17.60216743270073, lng: -62.22640763588963 },
+    { name: 'San José de Chiquitos', lat: -17.821017140143574, lng: -60.74397685301761 },
+    { name: 'Roboré', lat: -18.346763244843352, lng: -59.758742688516655 },
   ],
   'SCZ-SJC': [
-    { name: 'Santa Cruz (Terminal)', lat: -17.7897, lng: -63.1594 },
-    { name: 'Cotoca', lat: -17.7554, lng: -63.0645 },
-    { name: 'Pailón', lat: -17.6583, lng: -62.7239 },
-    { name: 'San José de Chiquitos (Terminal)', lat: -17.8427, lng: -60.7423 },
+    { name: 'Terminal Bimodal SCZ', lat: -17.789187255491594, lng: -63.162212227495424 },
+    { name: 'Cotoca', lat: -17.762744853257733, lng: -62.99207173328154 },
+    { name: 'Pailón', lat: -17.654195926372626, lng: -62.72057070864838 },
+    { name: 'San José de Chiquitos', lat: -17.821017140143574, lng: -60.74397685301761 },
   ],
   'PQA-SCZ': [
-    { name: 'Puerto Quijarro (Terminal)', lat: -19.0069, lng: -57.7289 },
-    { name: 'Puerto Suárez', lat: -18.9669, lng: -57.7972 },
-    { name: 'El Carmen Rivero Torres', lat: -18.8242, lng: -58.6253 },
-    { name: 'Roboré', lat: -18.3341, lng: -59.7548 },
-    { name: 'San José de Chiquitos', lat: -17.8427, lng: -60.7423 },
-    { name: 'Tres Cruces', lat: -17.7812, lng: -62.1583 },
-    { name: 'Pailón', lat: -17.6583, lng: -62.7239 },
-    { name: 'Cotoca', lat: -17.7554, lng: -63.0645 },
-    { name: 'Santa Cruz (Terminal)', lat: -17.7897, lng: -63.1594 },
+    { name: 'Puerto Quijarro', lat: -19.010028580919684, lng: -57.73605286681477 },
+    { name: 'Puerto Suárez', lat: -18.985130970648314, lng: -57.79418086476951 },
+    { name: 'El Carmen', lat: -18.817151689480497, lng: -58.62602157177211 },
+    { name: 'Aguas Calientes', lat: -18.44779789816133, lng: -59.502739343186164 },
+    { name: 'Roboré', lat: -18.346763244843352, lng: -59.758742688516655 },
+    { name: 'San José de Chiquitos', lat: -17.821017140143574, lng: -60.74397685301761 },
+    { name: 'Tres Cruces', lat: -17.60216743270073, lng: -62.22640763588963 },
+    { name: 'Pailón', lat: -17.654195926372626, lng: -62.72057070864838 },
+    { name: 'Cotoca', lat: -17.762744853257733, lng: -62.99207173328154 },
+    { name: 'Terminal Bimodal SCZ', lat: -17.789187255491594, lng: -63.162212227495424 },
   ],
 };
 
-const LOCAL_STORAGE_KEY = 'travell_offline_gps_queue';
+const LOCAL_STORAGE_KEY = 'encomiendas_offline_gps_queue';
 
 export default function ChoferPage() {
   const [selectedBusId, setSelectedBusId] = useState<string>('');
@@ -55,7 +56,7 @@ export default function ChoferPage() {
   const [simularOffline, setSimularOffline] = useState<boolean>(false);
   const [viajeActivo, setViajeActivo] = useState<boolean>(false);
   const [origenCoordenadas, setOrigenCoordenadas] = useState<'GPS' | 'RUTA'>('RUTA');
-  const [intervaloSegundos, setIntervaloSegundos] = useState<number>(60);
+  const [intervaloSegundos, setIntervaloSegundos] = useState<number>(10);
   const [indiceRutaVisual, setIndiceRutaVisual] = useState<number>(0);
   const [colaOffline, setColaOffline] = useState<RegistrarCoordenadaBusInput[]>([]);
   

@@ -206,10 +206,42 @@ export default function MapTracking({
 
   // Actualizar posición del bus en tiempo real sin re-crear el mapa
   useEffect(() => {
-    if (busMarkerRef.current && busLat !== undefined && busLng !== undefined && !isNaN(busLat) && !isNaN(busLng)) {
-      busMarkerRef.current.setLngLat([busLng, busLat]);
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (busLat !== undefined && busLng !== undefined && !isNaN(busLat) && !isNaN(busLng)) {
+      if (busMarkerRef.current) {
+        // Si el marcador ya existe, simplemente actualizamos su posición y centramos suavemente
+        busMarkerRef.current.setLngLat([busLng, busLat]);
+        map.flyTo({ center: [busLng, busLat], zoom: map.getZoom(), speed: 1.2 });
+      } else {
+        // Si el marcador no existía, lo creamos
+        const elBus = document.createElement('div');
+        elBus.innerHTML = `<div style="
+          width:42px;height:42px;border-radius:50%;
+          background:#C9A84C;border:3px solid #fff;
+          display:flex;align-items:center;justify-content:center;
+          box-shadow:0 2px 12px rgba(201,168,76,0.7);
+          font-size:18px;
+          animation: pulse-bus 2s infinite;
+        ">🚌</div>
+        <style>
+          @keyframes pulse-bus {
+            0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.5)}
+            50%{box-shadow:0 0 0 10px rgba(201,168,76,0)}
+          }
+        </style>`;
+        
+        const busMarker = new mapboxgl.Marker({ element: elBus, anchor: 'center' })
+          .setLngLat([busLng, busLat])
+          .setPopup(new mapboxgl.Popup({ offset: 24 }).setText(busLabel))
+          .addTo(map);
+        
+        busMarkerRef.current = busMarker;
+        map.flyTo({ center: [busLng, busLat], zoom: map.getZoom(), speed: 1.2 });
+      }
     }
-  }, [busLat, busLng]);
+  }, [busLat, busLng, busLabel]);
 
   if (mapError) {
     return (

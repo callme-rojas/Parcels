@@ -30,7 +30,7 @@ export interface UseBusLocationReturn {
  */
 export function useBusLocation(
   parcelId: string | undefined,
-  pollInterval = 30_000,
+  pollInterval = 3_000,
 ): UseBusLocationReturn {
   const { data, loading, error, refetch } = useQuery<{
     ubicacionBusPorEncomienda: BusLocationData | null;

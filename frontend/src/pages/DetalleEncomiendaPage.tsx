@@ -42,7 +42,7 @@ export default function DetalleEncomiendaPage() {
   const { confirmarRetiro, loading: confirmando } = useConfirmarRetiro();
   const { location: busLocation } = useBusLocation(
     parcel?.status === EstadoEncomienda.EN_TRANSITO ? id : undefined,
-    30_000,
+    3_000,
   );
 
   // Para la acción de confirmar retiro (solicita CI)
