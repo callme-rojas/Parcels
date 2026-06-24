@@ -288,7 +288,7 @@ export default function ManifiestosPage() {
         <div className="manifest-print-area" style={{ display: 'none' }}>
           <div style={{ borderBottom: '2px solid #000', paddingBottom: 12, marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, letterSpacing: -0.5 }}>TRAVELL ENCOMIENDAS</h1>
+              <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, letterSpacing: -0.5 }}>SISTEMA DE ENCOMIENDAS</h1>
               <span style={{ fontSize: 12, color: '#333' }}>Manifiesto de Carga y Hoja de Ruta Oficial</span>
             </div>
             <div style={{ textAlign: 'right' }}>

@@ -1,7 +1,7 @@
 import { Field, ID, Int, ObjectType } from '@nestjs/graphql';
 import { BusEstado } from './bus-estado.enum';
 
-@ObjectType({ description: 'Bus de la flota Travell' })
+@ObjectType({ description: 'Bus de la flota de buses' })
 export class Bus {
   @Field(() => ID)
   id!: string;

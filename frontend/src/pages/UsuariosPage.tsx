@@ -571,7 +571,7 @@ export default function UsuariosPage() {
                       type="email"
                       required
                       className="form-input"
-                      placeholder="ejemplo@travell.com"
+                      placeholder="ejemplo@encomiendas.com"
                       value={createFormData.email}
                       onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
                     />
@@ -676,7 +676,7 @@ export default function UsuariosPage() {
                       type="email"
                       required
                       className="form-input"
-                      placeholder="ejemplo@travell.com"
+                      placeholder="ejemplo@encomiendas.com"
                       value={editFormData.email}
                       onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                     />

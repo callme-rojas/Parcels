@@ -137,8 +137,8 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         </div>
         {!collapsed && (
           <div className="sidebar__brand-text">
-            <span className="sidebar__brand-name">Travell</span>
-            <span className="sidebar__brand-sub">Encomiendas</span>
+            <span className="sidebar__brand-name">Encomiendas</span>
+            <span className="sidebar__brand-sub">Sistema de Gestión</span>
           </div>
         )}
         

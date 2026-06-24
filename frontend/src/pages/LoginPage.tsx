@@ -53,9 +53,9 @@ export default function LoginPage() {
           <div className="login-card__logo">
             <Package size={36} strokeWidth={2} />
           </div>
-          <h1 className="login-card__title">Travell Encomiendas</h1>
+          <h1 className="login-card__title">Encomiendas</h1>
           <p className="login-card__subtitle">
-            Sistema de Gestión de Paquetes
+            Sistema de Gestión de Encomiendas
           </p>
         </div>
 
@@ -75,7 +75,7 @@ export default function LoginPage() {
               id="email"
               type="email"
               className="form-input"
-              placeholder="usuario@travell.com"
+              placeholder="usuario@encomiendas.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -126,58 +126,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Dev credentials hint */}
-        <div className="login-card__hint">
-          <p className="login-card__hint-title">Cuentas de prueba:</p>
-          <div className="login-card__hint-grid">
-            <button
-              type="button"
-              className="login-card__hint-item"
-              onClick={() => {
-                setEmail('admin@travell.com');
-                setPassword('admin123');
-              }}
-            >
-              <span className="login-card__hint-role">Admin</span>
-              <span className="login-card__hint-email">admin@travell.com</span>
-            </button>
-            <button
-              type="button"
-              className="login-card__hint-item"
-              onClick={() => {
-                setEmail('taquilla@travell.com');
-                setPassword('taquilla123');
-              }}
-            >
-              <span className="login-card__hint-role">Taquilla</span>
-              <span className="login-card__hint-email">taquilla@travell.com</span>
-            </button>
-            <button
-              type="button"
-              className="login-card__hint-item"
-              onClick={() => {
-                setEmail('bodega@travell.com');
-                setPassword('bodega123');
-              }}
-            >
-              <span className="login-card__hint-role">Bodega</span>
-              <span className="login-card__hint-email">bodega@travell.com</span>
-            </button>
-            <button
-              type="button"
-              className="login-card__hint-item"
-              onClick={() => {
-                setEmail('rosa@email.com');
-                setPassword('rosa123');
-              }}
-            >
-              <span className="login-card__hint-role">Usuario</span>
-              <span className="login-card__hint-email">rosa@email.com</span>
-            </button>
-          </div>
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: 16 }}>
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
           <p style={{ fontSize: 13, color: '#6B7280' }}>
             ¿No tienes cuenta?{' '}
             <Link to="/registro" style={{ color: '#1B3A6B', fontWeight: 600, textDecoration: 'none' }}>

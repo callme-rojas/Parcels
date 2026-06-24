@@ -11,10 +11,10 @@ import {
 
 // Dev users for quick-login
 const DEV_USERS: Record<string, Usuario> = {
-  admin: { id: 'dev-admin', nombre: 'Admin Dev', email: 'admin@travell.com', rol: Rol.ADMINISTRADOR, activo: true },
-  taquilla: { id: 'dev-taquilla', nombre: 'Carla Gutiérrez', email: 'taquilla@travell.com', rol: Rol.TAQUILLA, activo: true },
-  bodega: { id: 'dev-bodega', nombre: 'Jorge Mamani', email: 'bodega@travell.com', rol: Rol.BODEGA, activo: true },
-  cliente: { id: 'dev-cliente', nombre: 'Rosa Méndez', email: 'rosa@email.com', rol: Rol.CLIENTE, activo: true, telefono: '+591 7654-3210' },
+  admin: { id: 'dev-admin', nombre: 'Admin Dev', email: 'admin@encomiendas.com', rol: Rol.ADMINISTRADOR, activo: true },
+  taquilla: { id: 'dev-taquilla', nombre: 'Carla Gutiérrez', email: 'taquilla@encomiendas.com', rol: Rol.TAQUILLA, activo: true },
+  bodega: { id: 'dev-bodega', nombre: 'Jorge Mamani', email: 'bodega@encomiendas.com', rol: Rol.BODEGA, activo: true },
+  cliente: { id: 'dev-cliente', nombre: 'Rosa Méndez', email: 'cliente@encomiendas.com', rol: Rol.CLIENTE, activo: true, telefono: '+591 7654-3210' },
 };
 
 interface RouteItem {
@@ -81,10 +81,10 @@ const ALL_ROUTES: { section: string; color: string; routes: RouteItem[] }[] = [
 ];
 
 const DEV_USERS_CREDENTIALS: Record<string, { email: string; pass: string }> = {
-  admin: { email: 'admin@travell.test', pass: 'admin123' },
-  taquilla: { email: 'taquilla@travell.test', pass: 'taquilla123' },
-  bodega: { email: 'bodega@travell.test', pass: 'bodega123' },
-  cliente: { email: 'cliente@travell.test', pass: 'cliente123' },
+  admin: { email: 'admin@encomiendas.com', pass: 'admin123' },
+  taquilla: { email: 'taquilla@encomiendas.com', pass: 'taquilla123' },
+  bodega: { email: 'bodega@encomiendas.com', pass: 'bodega123' },
+  cliente: { email: 'cliente@encomiendas.com', pass: 'cliente123' },
 };
 
 export default function DevNavPage() {

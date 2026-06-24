@@ -28,7 +28,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const location = useLocation();
 
   const pageTitle = PAGE_TITLES[location.pathname]
-    || (location.pathname.startsWith('/encomiendas/') ? 'Detalle de Encomienda' : 'Travell Encomiendas');
+    || (location.pathname.startsWith('/encomiendas/') ? 'Detalle de Encomienda' : 'Encomiendas');
 
   return (
     <header className="topbar">

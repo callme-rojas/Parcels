@@ -56,9 +56,9 @@ const GUIDES: Record<string, RoleGuide> = {
     description: 'Operaciones de admisión, cobros físicos y entrega al cliente.',
     icon: <ScanBarcode size={20} />,
     steps: [
-      'Recepcionar paquetes en ventanilla buscando por código de tracking o escaneando la etiqueta PDF417 con la cámara web.',
-      'Confirmar que los datos de remitente y destinatario sean correctos, pesar el paquete y validar dimensiones.',
-      'Pasar el estado del paquete de "Registrado" a "Recepcionado".',
+      'Recepcionar encomiendas en ventanilla buscando por código de tracking o escaneando la etiqueta PDF417 con la cámara web.',
+      'Confirmar que los datos de remitente y destinatario sean correctos, pesar la encomienda y validar dimensiones.',
+      'Pasar el estado de la encomienda de "Registrado" a "Recepcionado".',
       'Registrar los pagos en la pestaña de "Cobros del Día" marcando la encomienda como "Cobrada".',
       'Entregar encomiendas al cliente final verificando físicamente su Cédula de Identidad (CI) antes de marcar como "Entregado".'
     ],
@@ -81,8 +81,8 @@ const GUIDES: Record<string, RoleGuide> = {
       'Clasificar las encomiendas recepcionadas en ventanilla para agruparlas por destino.',
       'Seleccionar el bus asignado a la ruta correspondiente en la pestaña "Buses & Flota".',
       'Asignar las encomiendas al bus adecuado respetando el límite de capacidad de la unidad.',
-      'Registrar la Carga de los paquetes al bus al momento de la partida (cambia estado a "En Tránsito").',
-      'Al llegar el bus a destino, registrar la Descarga de los paquetes en la bodega local (cambia estado a "En Destino").',
+      'Registrar la Carga de las encomiendas al bus al momento de la partida (cambia estado a "En Tránsito").',
+      'Al llegar el bus a destino, registrar la Descarga de las encomiendas en la bodega local (cambia estado a "En Destino").',
       'Mover las encomiendas descargadas a los estantes físicos de entrega y marcarlas como "Disponible" en el sistema.'
     ],
     faqs: [
@@ -224,7 +224,7 @@ export default function AyudaPage() {
             <HelpCircle size={24} style={{ color: 'var(--navy)' }} /> Centro de Ayuda & Guías
           </h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
-            Aprende a utilizar el sistema de Travell Encomiendas de acuerdo con tu rol y responsabilidades en la plataforma.
+            Aprende a utilizar el sistema de Gestión de Encomiendas de acuerdo con tu rol y responsabilidades en la plataforma.
           </p>
         </div>
       </div>

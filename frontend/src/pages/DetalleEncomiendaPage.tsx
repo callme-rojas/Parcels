@@ -535,7 +535,7 @@ export default function DetalleEncomiendaPage() {
               
               <div className="envio-label" style={{ margin: '0 auto', border: '1px solid var(--border)' }}>
                 <div className="envio-label__header">
-                  <Package size={20} /> <strong>Travell Encomiendas</strong>
+                  <Package size={20} /> <strong>Sistema de Encomiendas</strong>
                 </div>
                 <div className="envio-label__code">{parcel.trackingNumber}</div>
                 
@@ -713,7 +713,7 @@ export default function DetalleEncomiendaPage() {
         <div className="print-only">
           <div className="envio-label" style={{ margin: '0 auto', border: '1px solid var(--border)' }}>
             <div className="envio-label__header">
-              <Package size={20} /> <strong>Travell Encomiendas</strong>
+              <Package size={20} /> <strong>Sistema de Encomiendas</strong>
             </div>
             <div className="envio-label__code">{parcel.trackingNumber}</div>
             

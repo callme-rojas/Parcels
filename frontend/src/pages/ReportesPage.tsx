@@ -226,7 +226,7 @@ export default function ReportesPage() {
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       const periodLabel = PERIODS.find(p => p.key === period)?.label ?? 'Reporte';
-      pdf.save(`Travell_Reporte_${periodLabel}_${new Date().toISOString().slice(0, 10)}.pdf`);
+      pdf.save(`Reporte_${periodLabel}_${new Date().toISOString().slice(0, 10)}.pdf`);
     } catch (err) {
       console.error('PDF export error:', err);
       alert('Error al generar el PDF. Por favor intenta de nuevo.');

@@ -227,7 +227,7 @@ export default function CrearEnvioPage() {
               <Package size={20} strokeWidth={2.5} />
             </div>
             <span className="rastreo-nav__brand">
-              Travell <span>Encomiendas</span>
+              Sistema de <span>Encomiendas</span>
             </span>
           </div>
           <div className="rastreo-nav__links">
@@ -238,7 +238,7 @@ export default function CrearEnvioPage() {
               href="/enviar"
               className="rastreo-nav__link rastreo-nav__link--active"
             >
-              Enviar paquete
+              Enviar encomienda
             </a>
             <a href="/login" className="btn btn--primary btn--sm">
               Iniciar sesión
@@ -703,7 +703,7 @@ export default function CrearEnvioPage() {
 
               <div className="envio-label">
                 <div className="envio-label__header">
-                  <Package size={20} /> <strong>Travell Encomiendas</strong>
+                  <Package size={20} /> <strong>Sistema de Encomiendas</strong>
                 </div>
                 <div className="envio-label__code">{parcelCreado.trackingNumber}</div>
                 

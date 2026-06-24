@@ -297,11 +297,11 @@ export default function RastreoPublicoPage() {
           <div className="rastreo-nav__logo">
             <Package size={20} strokeWidth={2.5} />
           </div>
-          <span className="rastreo-nav__brand">Travell <span>Encomiendas</span></span>
+          <span className="rastreo-nav__brand">Sistema de <span>Encomiendas</span></span>
         </div>
         <div className="rastreo-nav__links">
           <a href="/rastreo" className="rastreo-nav__link rastreo-nav__link--active">Rastrear</a>
-          <a href="/enviar" className="rastreo-nav__link">Enviar paquete</a>
+          <a href="/enviar" className="rastreo-nav__link">Enviar encomienda</a>
           <a href="/login" className="btn btn--primary btn--sm">Iniciar sesión</a>
         </div>
       </nav>

@@ -297,7 +297,7 @@ export default function SucursalesPage() {
             <Building2 size={24} style={{ color: 'var(--navy)' }} /> Gestión de Sucursales
           </h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>
-            Administra las sucursales, oficinas de despacho, ubicaciones y datos de contacto de Travell Encomiendas.
+            Administra las sucursales, oficinas de despacho, ubicaciones y datos de contacto del sistema.
           </p>
         </div>
         <div className="enc-header__actions">
@@ -539,7 +539,7 @@ export default function SucursalesPage() {
                     type="text"
                     required
                     className="form-input"
-                    placeholder="Ej: Av. Interbimodal, Sector Encomiendas Travell"
+                    placeholder="Ej: Av. Interbimodal, Sector Encomiendas"
                     value={createFormData.direccion}
                     onChange={(e) => setCreateFormData({ ...createFormData, direccion: e.target.value })}
                   />
@@ -615,7 +615,7 @@ export default function SucursalesPage() {
                     type="text"
                     required
                     className="form-input"
-                    placeholder="Ej: Av. Interbimodal, Sector Encomiendas Travell"
+                    placeholder="Ej: Av. Interbimodal, Sector Encomiendas"
                     value={editFormData.direccion}
                     onChange={(e) => setEditFormData({ ...editFormData, direccion: e.target.value })}
                   />

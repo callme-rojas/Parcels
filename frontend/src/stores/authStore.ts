@@ -81,7 +81,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'travell-auth',
+      name: 'encomiendas-auth',
       partialize: (state) => ({
         user: state.user,
         token: state.token,
