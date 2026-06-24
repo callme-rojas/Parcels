@@ -35,19 +35,24 @@ type ReportType = 'encomiendas' | 'usuarios' | 'sucursales' | 'buses';
 
 // ─── Period Helpers ────────────────────────────────────────────
 
-function getPeriodDates(key: PeriodKey): { fechaDesde?: Date; fechaHasta?: Date } {
+function getPeriodDates(key: PeriodKey): { fechaDesde?: string; fechaHasta?: string } {
   const now = new Date();
-  const start = (days: number): Date => {
+  const start = (days: number): string => {
     const d = new Date(now);
     d.setDate(d.getDate() - days);
     d.setHours(0, 0, 0, 0);
-    return d;
+    return d.toISOString();
+  };
+  const end = (): string => {
+    const d = new Date(now);
+    d.setHours(23, 59, 59, 999);
+    return d.toISOString();
   };
   if (key === 'all') return {};
-  if (key === 'today') return { fechaDesde: start(0), fechaHasta: now };
-  if (key === 'week') return { fechaDesde: start(7), fechaHasta: now };
-  if (key === 'month') return { fechaDesde: start(30), fechaHasta: now };
-  if (key === '3months') return { fechaDesde: start(90), fechaHasta: now };
+  if (key === 'today') return { fechaDesde: start(0), fechaHasta: end() };
+  if (key === 'week') return { fechaDesde: start(7), fechaHasta: end() };
+  if (key === 'month') return { fechaDesde: start(30), fechaHasta: end() };
+  if (key === '3months') return { fechaDesde: start(90), fechaHasta: end() };
   return {};
 }
 
@@ -98,7 +103,7 @@ const COLOR_MAP = {
 function StatCard({ icon, title, value, subtitle, color }: StatCardProps) {
   const c = COLOR_MAP[color];
   return (
-    <div style={{
+    <div className="stat-card-print" style={{
       background: 'var(--bg-card)',
       border: '1px solid var(--border)',
       borderRadius: 16,
@@ -242,24 +247,112 @@ export default function ReportesPage() {
 
   return (
     <div className="panel-page" id="reportes-page">
-      {/* ── Indicadores Panel ─────────────────────────────────── */}
-      <div className="dashboard-panel" style={{ marginBottom: 24 }}>
-        <div className="dashboard-panel__header">
-          <h2 className="dashboard-panel__title">
-            <BarChart3 size={20} /> Indicadores Operativos
-          </h2>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn--secondary btn--sm" onClick={handlePrint}>
-              <Printer size={15} /> Imprimir
-            </button>
-            <button className="btn btn--primary btn--sm" onClick={handleExportPDF}>
-              <Download size={15} /> Exportar PDF
-            </button>
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #reportes-page-content, #reportes-page-content * {
+            visibility: visible;
+          }
+          #reportes-page-content {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            background: white !important;
+            color: black !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .no-print, .btn, select, input, .dashboard-panel__header button, .form-group, .data-table th:last-child, .data-table td:last-child {
+            display: none !important;
+          }
+          .print-only-header {
+            display: block !important;
+          }
+          .dashboard-panel {
+            border: none !important;
+            box-shadow: none !important;
+            margin-bottom: 24px !important;
+            background: transparent !important;
+          }
+          .dashboard-panel__header {
+            border-bottom: 2px solid #1e293b !important;
+            padding-bottom: 8px !important;
+            margin-bottom: 16px !important;
+          }
+          .dashboard-panel__title {
+            color: #1e293b !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+          }
+          .stats-grid-print {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 12px !important;
+            margin-bottom: 16px !important;
+          }
+          .stat-card-print {
+            border: 1px solid #cbd5e1 !important;
+            background: #f8fafc !important;
+            padding: 16px !important;
+            border-radius: 12px !important;
+            text-align: left !important;
+            box-shadow: none !important;
+          }
+          .data-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+          }
+          .data-table th {
+            background-color: #f1f5f9 !important;
+            color: #1e293b !important;
+            border: 1px solid #cbd5e1 !important;
+            padding: 8px !important;
+            font-size: 12px !important;
+          }
+          .data-table td {
+            border: 1px solid #cbd5e1 !important;
+            padding: 8px !important;
+            font-size: 11px !important;
+          }
+        }
+      `}</style>
+
+      <div id="reportes-page-content">
+        {/* Encabezado exclusivo para impresión */}
+        <div className="print-only-header" style={{ display: 'none', marginBottom: 24, borderBottom: '2px solid #1e293b', paddingBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <h1 style={{ fontSize: '24px', fontWeight: 800, margin: 0, color: '#1e293b' }}>REPORTE GENERAL DE ENCOMIENDAS</h1>
+              <span style={{ fontSize: '12px', color: '#475569' }}>Sistema de Gestión de Encomiendas</span>
+            </div>
+            <div style={{ textAlign: 'right', fontSize: '12px', color: '#475569' }}>
+              <div><strong>Período:</strong> {PERIODS.find(p => p.key === period)?.label}</div>
+              <div><strong>Fecha de Reporte:</strong> {new Date().toLocaleDateString('es-ES')} {new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
           </div>
         </div>
 
+        {/* ── Indicadores Panel ─────────────────────────────────── */}
+        <div className="dashboard-panel" style={{ marginBottom: 24 }}>
+          <div className="dashboard-panel__header">
+            <h2 className="dashboard-panel__title">
+              <BarChart3 size={20} /> Indicadores Operativos
+            </h2>
+            <div style={{ display: 'flex', gap: 8 }} className="no-print">
+              <button className="btn btn--secondary btn--sm" onClick={handlePrint}>
+                <Printer size={15} /> Imprimir
+              </button>
+              <button className="btn btn--primary btn--sm" onClick={handleExportPDF}>
+                <Download size={15} /> Exportar PDF
+              </button>
+            </div>
+          </div>
+
         {/* ── Period Pills ──────────────────────────────────────── */}
-        <div style={{ padding: '0 24px 16px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ padding: '0 24px 16px', display: 'flex', gap: 8, flexWrap: 'wrap' }} className="no-print">
           {PERIODS.map((p) => (
             <button
               key={p.key}
@@ -294,17 +387,18 @@ export default function ReportesPage() {
           ) : (
             <>
               {/* Row 1 — Operational KPIs */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 16, marginBottom: 16 }}>
+              <div className="stats-grid-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 16, marginBottom: 16 }}>
                 <StatCard icon={<TrendingUp size={22} />} title="Tasa de Éxito" value={`${ind?.tasaEntregaExitosa ?? 0}%`} subtitle={`${ind?.totalEntregadas ?? 0} entregadas`} color="green" />
                 <StatCard icon={<Package size={22} />} title="Total Registradas" value={ind?.totalRegistradas ?? 0} subtitle="Período seleccionado" color="blue" />
                 <StatCard icon={<Truck size={22} />} title="En Tránsito" value={ind?.totalEnTransito ?? 0} subtitle={`${ind?.totalDisponibles ?? 0} disponibles`} color="amber" />
                 <StatCard icon={<XCircle size={22} />} title="Canceladas" value={ind?.totalCanceladas ?? 0} subtitle={`${ind?.totalRecepcionadas ?? 0} recepcionadas`} color="red" />
               </div>
               {/* Row 2 — Financial KPIs */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 16 }}>
+              <div className="stats-grid-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 16 }}>
                 <StatCard icon={<Banknote size={22} />} title="Total Recaudado" value={`${(ind?.montoTotalPagado ?? 0).toFixed(2)} Bs`} subtitle={`${ind?.totalVentaEtiquetas ?? 0} etiquetas pagadas`} color="emerald" />
                 <StatCard icon={<Clock size={22} />} title="Pendiente de Cobro" value={`${(ind?.montoTotalPendiente ?? 0).toFixed(2)} Bs`} subtitle="Sin cobrar aún" color="purple" />
                 <StatCard icon={<Award size={22} />} title="Monto Total Registrado" value={`${(ind?.montoTotalRegistrado ?? 0).toFixed(2)} Bs`} subtitle="Suma de todos los envíos" color="blue" />
+                <CheckCircle2 size={22} className="no-print" style={{ display: 'none' }} />
                 <StatCard icon={<CheckCircle2 size={22} />} title="Entregas del Período" value={ind?.totalEntregadas ?? 0} subtitle={`${ind?.totalEnDestino ?? 0} en destino`} color="green" />
               </div>
 
@@ -346,7 +440,7 @@ export default function ReportesPage() {
       <div className="dashboard-panel">
         <div className="dashboard-panel__header" style={{ flexWrap: 'wrap', gap: 8 }}>
           <h2 className="dashboard-panel__title">Detalle del Reporte</h2>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }} className="no-print">
             {REPORT_TYPES.map((rt) => (
               <button
                 key={rt.key}
@@ -364,7 +458,7 @@ export default function ReportesPage() {
           {/* ── Encomiendas ──────────────────────────────────── */}
           {reportType === 'encomiendas' && (
             <>
-              <div className="taq-actions" style={{ marginBottom: 16 }}>
+              <div className="taq-actions no-print" style={{ marginBottom: 16 }}>
                 <div className="form-group" style={{ flex: 1, position: 'relative' }}>
                   <Search size={15} style={{ position: 'absolute', left: 12, top: 11, color: 'var(--text-muted)', pointerEvents: 'none' }} />
                   <input type="text" className="form-input" placeholder="Buscar por CI, Nombre, Guía..." style={{ paddingLeft: 36 }} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -430,7 +524,7 @@ export default function ReportesPage() {
                 </table>
               </div>
               {reporte && reporte.totalPages > 1 && (
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 20 }}>
+                <div className="no-print" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 20 }}>
                   <button className="btn btn--secondary btn--sm" disabled={page === 1} onClick={() => setPage(page - 1)}>Anterior</button>
                   <span style={{ fontSize: 14, alignSelf: 'center', color: 'var(--text-secondary)' }}>Página {page} de {reporte.totalPages}</span>
                   <button className="btn btn--secondary btn--sm" disabled={page === reporte.totalPages} onClick={() => setPage(page + 1)}>Siguiente</button>
@@ -532,6 +626,7 @@ export default function ReportesPage() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

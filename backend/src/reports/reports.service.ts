@@ -40,9 +40,7 @@ export class ReportsService {
       : this.endOfDay(now);
     const fechaDesde = filter?.fechaDesde
       ? this.startOfDay(filter.fechaDesde)
-      : this.startOfDay(
-          new Date(fechaHasta.getTime() - 30 * 24 * 60 * 60 * 1000),
-        );
+      : new Date(0); // Representa "Todo el tiempo" (1970-01-01) si no se especifica
 
     return { fechaDesde, fechaHasta };
   }

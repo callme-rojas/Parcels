@@ -98,6 +98,40 @@ export default function EncomiendasPage() {
     return c;
   }, [allEncomiendas]);
 
+  const handleExport = () => {
+    if (filtered.length === 0) {
+      alert('No hay encomiendas para exportar.');
+      return;
+    }
+
+    const headers = ['Código', 'Fecha Registro', 'Remitente', 'Destinatario', 'Ruta', 'Estado', 'Peso (kg)', 'Contenido'];
+    const rows = filtered.map(e => [
+      e.codigo,
+      new Date(e.creadoEn).toLocaleDateString('es-ES') + ' ' + new Date(e.creadoEn).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      e.remitente,
+      e.destinatario,
+      e.ruta,
+      e.estado,
+      e.peso.toString(),
+      e.contenido
+    ]);
+
+    // Convert to CSV with UTF-8 BOM
+    const csvContent = '\uFEFF' + [
+      headers.join(';'),
+      ...rows.map(row => row.map(val => `"${val.replace(/"/g, '""')}"`).join(';'))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Encomiendas_Export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const toggleSort = (field: typeof sortField) => {
     if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     else { setSortField(field); setSortDir('desc'); }
@@ -114,7 +148,7 @@ export default function EncomiendasPage() {
           <span className="enc-header__count">{filtered.length} registros</span>
         </div>
         <div className="enc-header__actions">
-          <button className="btn btn--secondary btn--sm">
+          <button className="btn btn--secondary btn--sm" onClick={handleExport}>
             <Download size={15} /> Exportar
           </button>
           <button className="btn btn--primary btn--sm" onClick={() => navigate('/crear-envio')}>
