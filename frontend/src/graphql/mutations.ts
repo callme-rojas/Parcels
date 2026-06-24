@@ -297,3 +297,9 @@ export const REGISTRAR_COORDENADA_MUTATION = gql`
   }
 `;
 
+export const FINALIZAR_VIAJE_MUTATION = gql`
+  mutation FinalizarViaje($busId: ID!) {
+    finalizarViaje(busId: $busId)
+  }
+`;
+

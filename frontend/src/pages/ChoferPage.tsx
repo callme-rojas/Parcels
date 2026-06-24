@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { Truck, Wifi, WifiOff, Play, Square, RefreshCw, MapPin, Route, AlertCircle, Database, ChevronDown, ChevronUp, Clock, Gauge } from 'lucide-react';
+import { Truck, Wifi, WifiOff, Play, Square, RefreshCw, MapPin, Route, AlertCircle, Database, ChevronDown, ChevronUp, Clock, Gauge, CheckCircle } from 'lucide-react';
 import { GET_BUSES } from '../graphql/queries';
-import { REGISTRAR_COORDENADA_MUTATION } from '../graphql/mutations';
+import { REGISTRAR_COORDENADA_MUTATION, FINALIZAR_VIAJE_MUTATION } from '../graphql/mutations';
 import type { Bus, RegistrarCoordenadaBusInput } from '../types';
 
 // Coordenadas reales de parada en carretera de la Ruta Nacional 4 en Bolivia
@@ -103,6 +103,9 @@ export default function ChoferPage() {
 
   // Mutación para enviar coordenadas al backend
   const [registrarCoordenada] = useMutation(REGISTRAR_COORDENADA_MUTATION);
+  const [finalizarViaje] = useMutation(FINALIZAR_VIAJE_MUTATION, {
+    refetchQueries: [{ query: GET_BUSES }],
+  });
 
   // Detectar estado de internet real
   useEffect(() => {
@@ -216,7 +219,14 @@ export default function ChoferPage() {
       if (!punto) {
         setViajeActivo(false);
         setCurrentLocationName('Llegada a destino');
-        alert('Viaje completado: Llegada al destino de la ruta.');
+        finalizarViaje({ variables: { busId: selectedBusId } })
+          .then(() => {
+            alert('Viaje completado: Llegada al destino de la ruta. Encomiendas en destino y bus listo.');
+          })
+          .catch(err => {
+            console.error('Error al finalizar viaje:', err);
+            alert('Viaje completado localmente, pero hubo un error al finalizar el viaje en el servidor.');
+          });
         return;
       }
 
@@ -231,7 +241,7 @@ export default function ChoferPage() {
       registrarPuntoGps({ busId: selectedBusId, lat, lng, velocidad: mockSpeed, recordedAt: timestamp });
       
       // Avanzar el índice de la ruta usando la referencia mutable
-      indiceRutaRef.current = (indiceRutaRef.current + 1) % puntos.length;
+      indiceRutaRef.current = (indiceRutaRef.current + 1);
       setIndiceRutaVisual(indiceRutaRef.current);
     } else {
       if (!navigator.geolocation) {
@@ -532,7 +542,7 @@ export default function ChoferPage() {
           </div>
 
           {/* Botones Grandes de Control */}
-          <div style={{ marginTop: '20px' }}>
+          <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {!viajeActivo ? (
               <button
                 type="button"
@@ -558,6 +568,27 @@ export default function ChoferPage() {
                 style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: 'var(--radius)' }}
               >
                 <Square size={18} fill="white" /> DETENER TRANSMISIÓN
+              </button>
+            )}
+
+            {selectedBus && (selectedBus.estado === 'EN_RUTA' || viajeActivo) && (
+              <button
+                type="button"
+                className="btn btn--gold"
+                onClick={async () => {
+                  if (window.confirm('¿Seguro que deseas finalizar el viaje? Esto marcará las encomiendas como "En destino" y liberará el bus.')) {
+                    setViajeActivo(false);
+                    try {
+                      await finalizarViaje({ variables: { busId: selectedBusId } });
+                      alert('Viaje finalizado con éxito.');
+                    } catch (err: any) {
+                      alert('Error al finalizar viaje: ' + err.message);
+                    }
+                  }
+                }}
+                style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', borderRadius: 'var(--radius)' }}
+              >
+                <CheckCircle size={18} /> FINALIZAR VIAJE
               </button>
             )}
           </div>

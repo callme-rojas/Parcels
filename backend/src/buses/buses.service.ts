@@ -148,6 +148,36 @@ export class BusesService {
   async registrarCoordenada(
     input: RegistrarCoordenadaBusInput,
   ): Promise<BusLocation> {
+    // Actualizar el estado del bus a EN_RUTA al recibir coordenadas GPS (inicio de viaje)
+    await this.prisma.bus.update({
+      where: { id: input.busId },
+      data: { estado: 'EN_RUTA' },
+    });
+
+    // Transicionar automáticamente a EN_TRANSITO las encomiendas asociadas que estén en RECEPCIONADO
+    const pendingParcels = await this.prisma.parcel.findMany({
+      where: {
+        assignedBusId: input.busId,
+        status: 'RECEPCIONADO',
+      },
+    });
+
+    for (const parcel of pendingParcels) {
+      await this.prisma.parcel.update({
+        where: { id: parcel.id },
+        data: { status: 'EN_TRANSITO' },
+      });
+
+      await this.prisma.parcelEvent.create({
+        data: {
+          parcelId: parcel.id,
+          status: 'EN_TRANSITO',
+          note: 'Encomienda en tránsito automáticamente tras inicio de viaje del bus',
+        },
+      });
+
+      await this.markAssignmentLoaded(parcel.id);
+    }
 
     const event = await this.prisma.busTrackingEvent.create({
       data: {
@@ -234,5 +264,45 @@ export class BusesService {
       where: { parcelId, isActive: true },
       data: { unloadedAt: new Date(), isActive: false },
     });
+  }
+
+  async finalizarViaje(busId: string): Promise<boolean> {
+    // 1. Cambiar el estado del bus a LISTO
+    await this.prisma.bus.update({
+      where: { id: busId },
+      data: { estado: 'LISTO' },
+    });
+
+    // 2. Obtener todas las encomiendas asociadas a este bus que están RECEPCIONADO o EN_TRANSITO
+    const parcels = await this.prisma.parcel.findMany({
+      where: {
+        assignedBusId: busId,
+        status: { in: ['RECEPCIONADO', 'EN_TRANSITO'] },
+      },
+    });
+
+    // 3. Cambiar su estado a EN_DESTINO, desasociar del bus y registrar el evento
+    for (const parcel of parcels) {
+      await this.prisma.parcel.update({
+        where: { id: parcel.id },
+        data: {
+          status: 'EN_DESTINO',
+          assignedBusId: null,
+        },
+      });
+
+      await this.prisma.parcelEvent.create({
+        data: {
+          parcelId: parcel.id,
+          status: 'EN_DESTINO',
+          note: 'Encomienda arribada a destino automáticamente tras completar viaje del bus',
+        },
+      });
+
+      // Marcar asignación de bus como inactiva/descargada
+      await this.markAssignmentUnloaded(parcel.id);
+    }
+
+    return true;
   }
 }

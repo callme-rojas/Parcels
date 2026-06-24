@@ -92,4 +92,13 @@ export class BusesResolver {
   ): Promise<BusLocation> {
     return this.busesService.registrarCoordenada(input);
   }
+
+  @Mutation(() => Boolean, {
+    description: 'Finalizar viaje del bus y descargar encomiendas a destino automáticamente',
+  })
+  finalizarViaje(
+    @Args('busId', { type: () => ID }) busId: string,
+  ): Promise<boolean> {
+    return this.busesService.finalizarViaje(busId);
+  }
 }
