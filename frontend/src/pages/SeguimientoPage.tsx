@@ -133,6 +133,7 @@ function MapPanel({ parcel }: { parcel: Parcel }) {
           busLng={location?.lng}
           busLabel={`${parcel.assignedBusFlota ?? 'Bus'} · ${parcel.assignedBusPlaca ?? ''}`}
           height="100%"
+          routeCode={parcel.routeCode}
         />
       </div>
 

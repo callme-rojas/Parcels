@@ -238,6 +238,7 @@ export default function DetalleEncomiendaPage() {
               busLng={busLocation?.lng}
               busLabel={`Bus · ${parcel.assignedBusFlota ?? ''} ${parcel.assignedBusPlaca ?? ''}`.trim()}
               height={300}
+              routeCode={parcel.routeCode}
             />
           </div>
         </div>

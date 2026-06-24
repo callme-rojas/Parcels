@@ -139,6 +139,7 @@ function ResultCard({ parcel }: { parcel: Parcel }) {
               busLng={busLocation?.lng}
               busLabel={`Bus · ${parcel.assignedBusFlota ?? ''} ${parcel.assignedBusPlaca ?? ''}`.trim()}
               height={340}
+              routeCode={parcel.routeCode}
             />
           </div>
 

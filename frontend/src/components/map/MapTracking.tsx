@@ -4,6 +4,48 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN as string;
 
+const PUNTOS_RUTA: Record<string, { lat: number; lng: number }[]> = {
+  'SCZ-PQA': [
+    { lat: -17.789187255491594, lng: -63.162212227495424 },
+    { lat: -17.762744853257733, lng: -62.99207173328154 },
+    { lat: -17.654195926372626, lng: -62.72057070864838 },
+    { lat: -17.60216743270073, lng: -62.22640763588963 },
+    { lat: -17.821017140143574, lng: -60.74397685301761 },
+    { lat: -17.908251650076394, lng: -60.36953735479581 },
+    { lat: -18.346763244843352, lng: -59.758742688516655 },
+    { lat: -18.44779789816133, lng: -59.502739343186164 },
+    { lat: -18.817151689480497, lng: -58.62602157177211 },
+    { lat: -18.985130970648314, lng: -57.79418086476951 },
+    { lat: -19.010028580919684, lng: -57.73605286681477 },
+  ],
+  'SCZ-ROB': [
+    { lat: -17.789187255491594, lng: -63.162212227495424 },
+    { lat: -17.762744853257733, lng: -62.99207173328154 },
+    { lat: -17.654195926372626, lng: -62.72057070864838 },
+    { lat: -17.60216743270073, lng: -62.22640763588963 },
+    { lat: -17.821017140143574, lng: -60.74397685301761 },
+    { lat: -18.346763244843352, lng: -59.758742688516655 },
+  ],
+  'SCZ-SJC': [
+    { lat: -17.789187255491594, lng: -63.162212227495424 },
+    { lat: -17.762744853257733, lng: -62.99207173328154 },
+    { lat: -17.654195926372626, lng: -62.72057070864838 },
+    { lat: -17.821017140143574, lng: -60.74397685301761 },
+  ],
+  'PQA-SCZ': [
+    { lat: -19.010028580919684, lng: -57.73605286681477 },
+    { lat: -18.985130970648314, lng: -57.79418086476951 },
+    { lat: -18.817151689480497, lng: -58.62602157177211 },
+    { lat: -18.44779789816133, lng: -59.502739343186164 },
+    { lat: -18.346763244843352, lng: -59.758742688516655 },
+    { lat: -17.821017140143574, lng: -60.74397685301761 },
+    { lat: -17.60216743270073, lng: -62.22640763588963 },
+    { lat: -17.654195926372626, lng: -62.72057070864838 },
+    { lat: -17.762744853257733, lng: -62.99207173328154 },
+    { lat: -17.789187255491594, lng: -63.162212227495424 },
+  ],
+};
+
 export interface MapTrackingProps {
   /** Coordenadas del punto de origen */
   originLat: number;
@@ -22,6 +64,9 @@ export interface MapTrackingProps {
 
   /** Altura del contenedor */
   height?: string | number;
+
+  /** Código de la ruta para trazar puntos intermedios exactos */
+  routeCode?: string;
 }
 
 export default function MapTracking({
@@ -35,6 +80,7 @@ export default function MapTracking({
   busLng,
   busLabel = 'Bus',
   height = 320,
+  routeCode,
 }: MapTrackingProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -129,7 +175,14 @@ export default function MapTracking({
 
           // Intentar obtener el trazado real por carretera
           if (mapboxgl.accessToken) {
-            const queryUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${originLng},${originLat};${destinationLng},${destinationLat}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
+            let coordsPath = `${originLng},${originLat};${destinationLng},${destinationLat}`;
+            
+            // Si tenemos routeCode y puntos intermedios definidos, los usamos todos para trazar la carretera exacta
+            if (routeCode && PUNTOS_RUTA[routeCode]) {
+              coordsPath = PUNTOS_RUTA[routeCode].map(p => `${p.lng},${p.lat}`).join(';');
+            }
+
+            const queryUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordsPath}?geometries=geojson&overview=full&access_token=${mapboxgl.accessToken}`;
             fetch(queryUrl)
               .then((res) => res.json())
               .then((data) => {
