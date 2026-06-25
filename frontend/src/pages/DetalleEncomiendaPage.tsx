@@ -359,6 +359,11 @@ export default function DetalleEncomiendaPage() {
                         {ev.note && (
                           <span className="rastreo-timeline__detail">{ev.note}</span>
                         )}
+                        {ev.usuarioId && (
+                          <span style={{ display: 'block', fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                            👤 Resp: {ev.usuarioId}
+                          </span>
+                        )}
                       </div>
                       <span className="rastreo-timeline__date">{fmt(ev.createdAt)}</span>
                     </div>
